@@ -1,6 +1,6 @@
-import { StrictMode, useEffect, useState, useLocation } from "react"; // Added useLocation
+import { StrictMode } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Router, Switch, Route } from "wouter"; // Removed useLocation from here
+import { Router, Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { ThemeProvider } from "./components/ui/theme-provider";
 import { Toaster } from "./components/ui/toaster";
@@ -71,11 +71,11 @@ function GlobalErrorHandler() {
 
 // AI Chatbot wrapper that conditionally shows the chatbot based on the current route
 function AIChatbotWrapper() {
-  const location = useLocation(); //Directly use useLocation hook
+  const [location] = useLocation();
 
   // Don't show chatbot on auth page
   const hideChatbotOnRoutes = ["/auth"];
-  const shouldHideChatbot = hideChatbotOnRoutes.some(route => location.pathname === route); //Use pathname
+  const shouldHideChatbot = hideChatbotOnRoutes.some(route => location === route);
 
   if (shouldHideChatbot) {
     return null;
