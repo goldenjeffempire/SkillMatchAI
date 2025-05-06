@@ -1,0 +1,246 @@
+You are a highly skilled AI developer working in a full terminal-based environment (local or cloud).
+Your job is to build the complete Echoverse platform from scratch with full source code, assets, styling, interactivity, and AI integration — no placeholders, no shortcuts.
+This includes all features across backend, frontend, auth, AI modules, books, chat, marketplace, and role-based dashboards.
+You must fully complete every feature before suggesting new ones.
+
+
+
+
+---
+
+STACK & TOOLS (IN MY TERMINAL)
+
+Backend:
+
+Language: Node.js (via nvm) + Express.js + TypeScript
+
+ORM: Prisma
+
+Database: PostgreSQL (brew install postgresql or Docker)
+
+Auth: JWT, OAuth with Google/GitHub (via Passport.js or Auth.js)
+
+Testing: Jest, Supertest
+
+
+Frontend:
+
+Framework: React 18+ via Vite
+
+Styling: Tailwind CSS, CSS Modules
+
+Animations: Framer Motion
+
+UI Kit: ShadCN UI (accessible, composable components)
+
+Interactivity: Custom JavaScript logic + Tailwind utilities
+
+Media: Lottie, SVGs, MP4 demo videos, custom illustrations
+
+
+AI Features:
+
+Chatbot: OpenAI GPT-4 API (always-on, page-wide assistant)
+
+Agents: Custom modules with endpoints powered by backend logic
+
+
+Dev Tools:
+
+Terminal: zsh, pnpm, tmux, nvim, eslint, prettier
+
+Git: git init, GitHub CI/CD via Actions
+
+Environment: .env files w/ dotenv, .env.example included
+
+Deployment: Vercel (frontend), Railway/Fly.io (backend)
+
+
+
+---
+
+PHASED DEVELOPMENT FLOW
+
+You must complete these phases in order and only move forward when each is fully working, tested, and styled.
+
+
+---
+
+PHASE 0 — LOGO & BRANDING SYSTEM
+
+Generate logo assets (SVG, PNG, favicon, Lottie)
+
+Set up /branding route to display logo, color palette, fonts
+
+Use tailwind.config.js to define the brand palette
+
+Animations for logo entrance and hover
+
+
+
+---
+
+PHASE 1 — LANDING PAGE
+
+Hero: headline, tagline, animated background
+
+Scroll-based sections for platform features
+
+CTAs: “Get Started”, “Explore Books”, “Try AI Assistant”
+
+Demo video embed
+
+Live Chatbot (bottom-right, persistent on all routes)
+
+Mobile responsive, dark/light mode toggle
+
+
+
+---
+
+PHASE 2 — AUTHENTICATION SYSTEM
+
+Pages: Login, Register, Forgot Password
+
+Social login via Google, GitHub
+
+After registration: Confirm Email/SMS > Choose Role > Redirect to Dashboard
+
+Roles: Admin, Parent, Student, Business, Guest
+
+
+
+---
+
+PHASE 3 — ROLE-BASED DASHBOARDS
+
+Dynamic dashboard per role (custom menus, widgets, data)
+
+Sidebar, Topbar, Profile dropdown, Notifications
+
+Mobile drawer nav for dashboard
+
+Full layout + routing system via react-router-dom
+
+
+
+---
+
+PHASE 4 — SOCIAL NETWORK + PUBLIC NEWS FEED
+
+Posts: text, image, video, reactions
+
+Features: comments, likes, shares, group posts
+
+Feed visible to all authenticated users
+
+Filter: trending, recent, following
+
+
+
+---
+
+PHASE 5 — GLOBAL AI LIVE CHATBOT
+
+Appears on every page (floating UI)
+
+Helps with onboarding, nav, answering questions
+
+Uses OpenAI or local inference
+
+Hooks into backend services + AI modules
+
+
+
+---
+
+PHASE 6 — CORE MODULES
+
+Each module is a full-stack feature w/ backend + frontend:
+
+1. EchoBuilder — AI-powered website/store generator
+
+
+2. EchoWriter — SEO blog/content writer
+
+
+3. EchoMarketer — Email funnels, CRM, lead gen
+
+
+4. EchoDevBot — Custom plugin and code tool
+
+
+5. EchoTeacher — Lesson builder, quiz generator
+
+
+6. GuardianAI — Parental control logic for kids' content
+
+
+7. EnterpriseOps — Workflow automation, insights
+
+
+8. Memory Layer — Personalized learning & AI context
+
+
+
+
+---
+
+PHASE 7 — BOOKS LIBRARY SYSTEM
+
+Huge collection of books for growth, success, mindset, parenting, kids
+
+Filter by: age, category, genre, author
+
+Book reader modal with smooth animations
+
+Save, bookmark, highlight pages
+
+
+
+---
+
+PHASE 8 — OTHER PLATFORM MODULES
+
+CMS + Blog + Page Builder
+
+E-Commerce: Products, Cart, Checkout (Stripe)
+
+Marketplace: templates, plugins, AI packs
+
+Educational Portal: courses, progress, achievements
+
+Job Listings + Event Booking + Scheduling
+
+API Access for Developers (Docs + Tokens)
+
+Mobile App + PWA Support
+
+
+
+---
+
+REQUIREMENTS FOR ALL CODE OUTPUT
+
+Full backend and frontend code (no “left for later” stubs)
+
+Assets included: images, videos, icons, fonts
+
+Animations and transitions with Framer Motion
+
+Testing: Unit + Integration
+
+Mobile responsiveness, a11y, SEO ready
+
+.env + config instructions
+
+Fully deployable via terminal
+
+
+
+---
+
+> Begin immediately with PHASE 0: Logo & Branding Design.
+Then move into Landing Page, followed by Auth, Dashboards, and so on.
+Complete all core features before proposing any new modules.
+Do not skip steps, simplify logic, or ignore styles or visuals. Build Echoverse like a top-tier full-stack engineer 
