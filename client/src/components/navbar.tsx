@@ -23,6 +23,7 @@ export function Navbar() {
     { href: "/#ai-tools", label: "AI Tools" },
     { href: "/#library", label: "Library" },
     { href: "/projects", label: "My Projects", requiresAuth: true },
+    { href: "/ai-studio", label: "AI Studio", requiresAuth: true },
     { href: "/branding", label: "Branding" },
     { href: "/subscription", label: "Pricing", requiresAuth: false }
   ];

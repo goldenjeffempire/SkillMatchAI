@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, FileText, BarChart2, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { useNavigate } from "wouter";
-import MainLayout from "@/components/layouts/main-layout";
+import { useLocation } from "wouter";
+import { MainLayout } from "@/components/layouts/main-layout";
 import { AiContent } from "@shared/schema";
 
 export default function AIStudioPage() {
   const { user } = useAuth();
-  const navigate = useNavigate();
+  const [, navigate] = useLocation();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("generator");
   const [selectedContent, setSelectedContent] = useState<AiContent | null>(null);
@@ -32,7 +32,7 @@ export default function AIStudioPage() {
             </p>
           </div>
           <div className="mt-4 md:mt-0">
-            <Button variant="gradient" className="ml-auto">
+            <Button variant="default" className="ml-auto bg-primary/90 hover:bg-primary">
               <Crown className="mr-2 h-4 w-4" />
               Upgrade Plan
             </Button>

@@ -28,6 +28,7 @@ function Router() {
       <ProtectedRoute path="/success" component={SuccessPage} />
       <ProtectedRoute path="/projects" component={ProjectsPage} />
       <ProtectedRoute path="/projects/:id" component={ProjectDetailPage} />
+      <ProtectedRoute path="/ai-studio" component={AIStudioPage} />
       <Route component={NotFound} />
     </Switch>
   );
