@@ -5,6 +5,7 @@ import { setupAuth } from "./auth";
 import { WebSocketServer } from "ws";
 import { z } from "zod";
 import { insertPostSchema, insertCommentSchema } from "@shared/schema";
+import { generateChatResponse, generateContent } from "./openai";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
@@ -352,6 +353,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user profile:", error);
       res.status(500).json({ message: "Failed to fetch user profile" });
+    }
+  });
+
+  // AI Chatbot route
+  app.post("/api/chat", async (req, res) => {
+    try {
+      const { messages } = req.body;
+      
+      if (!Array.isArray(messages)) {
+        return res.status(400).json({ message: "Invalid messages format" });
+      }
+      
+      // Get user info for personalization if authenticated
+      let systemPrompt = "You are Echo, the helpful AI assistant for Echoverse platform. ";
+      systemPrompt += "Echoverse is a comprehensive SaaS platform with AI tools like EchoWriter, EchoBuilder, EchoSeller, EchoMarketer, EchoTeacher, and EchoDevBot. ";
+      systemPrompt += "Your goal is to help users understand and use these tools, provide assistance, and answer questions about Echoverse features. ";
+      systemPrompt += "Keep responses helpful, friendly, and concise.";
+      
+      if (req.isAuthenticated()) {
+        systemPrompt += ` The user's name is ${req.user!.username}.`;
+      }
+      
+      // Format messages for OpenAI API
+      const formattedMessages = messages.map((msg: any) => ({
+        role: msg.sender === "user" ? "user" as const : "assistant" as const,
+        content: msg.text
+      }));
+      
+      const response = await generateChatResponse(formattedMessages, systemPrompt);
+      
+      res.json({ 
+        text: response,
+        id: Date.now().toString(),
+        sender: "assistant",
+        timestamp: new Date()
+      });
+    } catch (error) {
+      console.error("Error generating chat response:", error);
+      res.status(500).json({ message: "Failed to generate chat response" });
+    }
+  });
+  
+  // Content Generation route
+  app.post("/api/generate-content", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to generate content" });
+      }
+      
+      const { prompt, type, context, options } = req.body;
+      
+      if (!prompt) {
+        return res.status(400).json({ message: "Prompt is required" });
+      }
+      
+      const content = await generateContent(prompt, context, { 
+        type,
+        ...options
+      });
+      
+      res.json({ content });
+    } catch (error) {
+      console.error("Error generating content:", error);
+      res.status(500).json({ message: "Failed to generate content" });
     }
   });
 

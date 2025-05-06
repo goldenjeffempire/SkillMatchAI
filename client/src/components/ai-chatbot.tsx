@@ -64,45 +64,43 @@ export function AIChatbot() {
       scrollToBottom();
     }, 100);
     
-    // Simulate AI response
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        sender: "assistant",
-        text: getAIResponse(inputValue, user?.username),
-        timestamp: new Date()
-      };
+    // Get response from the server
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [...messages, userMessage]
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to get response from AI');
+      }
+      
+      const assistantMessage: Message = await response.json();
       
       setMessages(prev => [...prev, assistantMessage]);
-      setIsProcessing(false);
       
       setTimeout(() => {
         scrollToBottom();
       }, 100);
-    }, 1000);
-  };
-
-  // Simple response generation - in a real app, this would call the OpenAI API
-  const getAIResponse = (message: string, username?: string): string => {
-    const greeting = username ? `Hi ${username}! ` : "";
-    
-    if (message.toLowerCase().includes("help")) {
-      return `${greeting}I can help you with various tasks like building websites, writing content, creating marketing materials, or learning new skills. What would you like to work on today?`;
-    } 
-    else if (message.toLowerCase().includes("website") || message.toLowerCase().includes("build")) {
-      return `${greeting}I'd be happy to help you build a website! With EchoBuilder, you can create a professional website by describing what you want, and I'll generate it for you. Would you like to start with a business site, portfolio, or online store?`;
-    }
-    else if (message.toLowerCase().includes("ai") || message.toLowerCase().includes("tool")) {
-      return `${greeting}Echoverse offers several AI tools including EchoWriter for content creation, EchoBuilder for websites, EchoSeller for sales copy, EchoMarketer for marketing, and EchoTeacher for learning materials. Which one interests you most?`;
-    }
-    else if (message.toLowerCase().includes("book") || message.toLowerCase().includes("read")) {
-      return `${greeting}Our Books & Growth Library has thousands of titles on productivity, business, personal development, and more. I can recommend books based on your interests or help you find specific topics. What topics interest you?`;
-    }
-    else if (message.toLowerCase().includes("login") || message.toLowerCase().includes("account")) {
-      return `${greeting}You can create an account or login by clicking the "Get Started" button in the top right corner. This will give you full access to all Echoverse features and save your progress.`;
-    }
-    else {
-      return `${greeting}Thanks for your message! I'm here to help with anything related to Echoverse's tools for website building, content creation, e-commerce, marketing, or learning. Is there something specific you'd like to know more about?`;
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      
+      // Fallback message in case of API error
+      const fallbackMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        sender: "assistant",
+        text: "I'm sorry, I'm having trouble connecting to my AI services at the moment. Please try again later.",
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, fallbackMessage]);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
