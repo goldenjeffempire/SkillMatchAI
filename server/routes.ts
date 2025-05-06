@@ -662,6 +662,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Educational content generation endpoint
+  // Enhanced EchoTeacher endpoints
+  app.post("/api/teacher/generate-lesson", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { topic, gradeLevel, duration, learningStyle } = req.body;
+      
+      const context = await memoryLayer.getPersonalizedContext(req.user!.id);
+      const systemPrompt = `You are an expert educator. Generate a lesson plan for ${topic} appropriate for grade ${gradeLevel}, duration ${duration} minutes. ${context}`;
+      
+      const { content } = await generateContent(systemPrompt, {
+        type: "lesson",
+        userId: req.user!.id
+      });
+
+      await memoryLayer.storeMemory(req.user!.id, "lesson_preferences", { topic, gradeLevel });
+      
+      res.json({ content });
+    } catch (error) {
+      console.error("Error generating lesson:", error);
+      res.status(500).json({ message: "Failed to generate lesson" });
+    }
+  });
+
+  app.post("/api/teacher/generate-quiz", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { topic, difficulty, questionCount } = req.body;
+      
+      const systemPrompt = `Create a ${difficulty} level quiz about ${topic} with ${questionCount} questions. Include multiple choice and open-ended questions.`;
+      
+      const { content } = await generateContent(systemPrompt, {
+        type: "quiz",
+        userId: req.user!.id
+      });
+      
+      res.json({ content });
+    } catch (error) {
+      console.error("Error generating quiz:", error);
+      res.status(500).json({ message: "Failed to generate quiz" });
+    }
+  });
+
   app.post("/api/ai/generate-educational", async (req, res) => {
     try {
       if (!req.isAuthenticated()) {
