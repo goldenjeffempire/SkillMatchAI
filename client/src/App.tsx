@@ -1,4 +1,4 @@
-import { StrictMode, useEffect } from "react";
+import { StrictMode } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import { Router, Switch, Route, useLocation } from "wouter";
