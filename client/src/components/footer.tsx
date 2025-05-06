@@ -37,11 +37,11 @@ export function Footer() {
           <div>
             <h4 className="text-white font-semibold mb-4">Features</h4>
             <ul className="space-y-3">
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Website Builder</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">E-Commerce</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Learning Portal</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Marketing Tools</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Social Feed</a></li>
+              <li><Link href="/echo-builder"><a className="text-gray-400 hover:text-white transition-colors">Website Builder</a></Link></li>
+              <li><Link href="/products"><a className="text-gray-400 hover:text-white transition-colors">E-Commerce</a></Link></li>
+              <li><Link href="/books"><a className="text-gray-400 hover:text-white transition-colors">Learning Portal</a></Link></li>
+              <li><Link href="/echo-marketer"><a className="text-gray-400 hover:text-white transition-colors">Marketing Tools</a></Link></li>
+              <li><Link href="/social"><a className="text-gray-400 hover:text-white transition-colors">Social Feed</a></Link></li>
             </ul>
           </div>
 

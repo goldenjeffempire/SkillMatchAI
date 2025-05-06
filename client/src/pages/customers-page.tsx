@@ -100,7 +100,9 @@ export default function CustomersPage() {
                     <TableCell>{customer.orders}</TableCell>
                     <TableCell>${customer.totalSpent.toFixed(2)}</TableCell>
                     <TableCell>
-                      <Button variant="outline" size="sm">View Details</Button>
+                      <Link href={`/customers/${customer.id}`}>
+                        <Button variant="outline" size="sm">View Details</Button>
+                      </Link>
                     </TableCell>
                   </TableRow>
                 ))}

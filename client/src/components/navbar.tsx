@@ -19,13 +19,13 @@ export function Navbar() {
   };
   
   const navLinks = [
-    { href: "/#features", label: "Features" },
-    { href: "/#ai-tools", label: "AI Tools" },
-    { href: "/#library", label: "Library" },
+    { href: "/", label: "Home" },
+    { href: "/dashboard", label: "Dashboard", requiresAuth: true },
     { href: "/projects", label: "My Projects", requiresAuth: true },
     { href: "/ai-studio", label: "AI Studio", requiresAuth: true },
-    { href: "/branding", label: "Branding" },
-    { href: "/subscription", label: "Pricing", requiresAuth: false }
+    { href: "/library", label: "Library", requiresAuth: true },
+    { href: "/subscription", label: "Pricing" },
+    { href: "/branding", label: "Branding" }
   ];
   
   return (
