@@ -26,7 +26,7 @@ export function useAuth() {
   const { toast } = useToast();
   const { user, setUser } = useAuthStore();
 
-  const { isLoading } = useQuery({
+  const { isLoading, error } = useQuery({
     queryKey: ["user"],
     queryFn: async () => {
       try {
