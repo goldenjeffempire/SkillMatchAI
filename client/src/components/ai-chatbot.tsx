@@ -1,125 +1,124 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Loader2, Bot, User, X, Settings } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { AnimatePresence, motion } from "framer-motion";
+import { MessageCircle, Send, X, Maximize2, Minimize2, Bot, User, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import Markdown from "react-markdown";
 
 interface Message {
   id: string;
-  role: "user" | "assistant";
+  role: "user" | "assistant" | "system";
   content: string;
   timestamp: Date;
 }
 
-const initialSystemMessage = `I'm EchoBot, your AI assistant in Echoverse. I can help you with content creation, answer questions, or assist with using the platform.`;
-
-export function AiChatbot({ 
-  initiallyOpen = false,
-  useFullScreen = false,
-  className = "" 
-}: { 
-  initiallyOpen?: boolean;
-  useFullScreen?: boolean;
-  className?: string;
-}) {
-  const [isOpen, setIsOpen] = useState(initiallyOpen);
-  const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "system-1",
-      role: "assistant",
-      content: initialSystemMessage,
-      timestamp: new Date(),
-    },
-  ]);
-  const [isHovered, setIsHovered] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [model, setModel] = useState("gpt-4o");
-  const [temperature, setTemperature] = useState(0.7);
-  
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
+export function AIChatbot() {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState<Message[]>([{
+    id: "welcome-message",
+    role: "assistant",
+    content: "Hello! 👋 I'm Echo, your AI assistant for the Echoverse platform. How can I help you today?",
+    timestamp: new Date()
+  }]);
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto scroll to the bottom of messages
+  // Auto scroll to bottom when new messages are added
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
 
-  // Focus input when chat opens
+  // Focus on input when chat is opened
   useEffect(() => {
-    if (isOpen && inputRef.current) {
+    if (isOpen && !isMinimized && inputRef.current) {
       inputRef.current.focus();
     }
-  }, [isOpen]);
+  }, [isOpen, isMinimized]);
 
-  const chatMutation = useMutation({
-    mutationFn: async (message: string) => {
-      const response = await apiRequest("POST", "/api/ai/chat", {
-        message,
-        model,
-        temperature,
-        history: messages.map(({ role, content }) => ({ role, content })),
-      });
-      return await response.json();
-    },
-    onSuccess: (data) => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `assistant-${Date.now()}`,
-          role: "assistant",
-          content: data.response,
-          timestamp: new Date(),
-        },
-      ]);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: `Failed to get response: ${error.message}`,
-        variant: "destructive",
-      });
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `error-${Date.now()}`,
-          role: "assistant",
-          content: "I'm sorry, I encountered an error. Please try again.",
-          timestamp: new Date(),
-        },
-      ]);
-    },
-  });
-
-  const handleSendMessage = () => {
-    if (!input.trim()) return;
-    
-    // Add user message to state
-    const userMessage: Message = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      content: input,
-      timestamp: new Date(),
-    };
-    
-    setMessages((prev) => [...prev, userMessage]);
-    
-    // Clear input
-    setInput("");
-    
-    // Send to AI
-    chatMutation.mutate(input);
+  // Generate a unique ID for messages
+  const generateId = () => {
+    return Date.now().toString(36) + Math.random().toString(36).substring(2);
   };
 
+  const handleSendMessage = async () => {
+    if (!message.trim()) return;
+    
+    // Add user message to chat
+    const userMessage: Message = {
+      id: generateId(),
+      role: "user",
+      content: message,
+      timestamp: new Date()
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    setMessage("");
+    setIsLoading(true);
+    
+    try {
+      // Format history for the API
+      const history = messages
+        .filter(msg => msg.role !== "system")
+        .map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }));
+      
+      // Send request to API
+      const response = await apiRequest("POST", "/api/ai/chat", {
+        message: userMessage.content,
+        history
+      });
+      
+      const data = await response.json();
+      
+      // Add assistant response to chat
+      const assistantMessage: Message = {
+        id: generateId(),
+        role: "assistant",
+        content: data.response,
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch (error: any) {
+      console.error("Error sending message:", error);
+      
+      toast({
+        title: "Error",
+        description: "Failed to get a response. Please try again.",
+        variant: "destructive"
+      });
+      
+      // Add error message to chat
+      const errorMessage: Message = {
+        id: generateId(),
+        role: "system",
+        content: "I'm sorry, I couldn't process your request. Please try again later.",
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle Enter key to send message
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -127,220 +126,243 @@ export function AiChatbot({
     }
   };
 
-  const toggleChat = () => {
-    setIsOpen((prev) => !prev);
+  // Animation variants
+  const chatButtonVariants = {
+    initial: { scale: 0.8, opacity: 0 },
+    animate: { scale: 1, opacity: 1, transition: { type: "spring", stiffness: 400, damping: 17 } },
+    tap: { scale: 0.9 },
+    hover: { scale: 1.1 }
   };
 
-  const clearChat = () => {
-    setMessages([
-      {
-        id: "system-1",
-        role: "assistant",
-        content: initialSystemMessage,
-        timestamp: new Date(),
-      },
-    ]);
+  const chatContainerVariants = {
+    hidden: { opacity: 0, y: 20, scale: 0.95 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      scale: 1,
+      transition: { 
+        type: "spring", 
+        damping: 20, 
+        stiffness: 300
+      }
+    },
+    exit: { 
+      opacity: 0, 
+      y: 20, 
+      scale: 0.95,
+      transition: { duration: 0.2 }
+    }
   };
 
-  return (
-    <>
-      {!isOpen && !useFullScreen && (
-        <motion.button
-          onClick={toggleChat}
-          className="fixed bottom-5 right-5 bg-primary text-white p-4 rounded-full shadow-lg z-50 flex items-center justify-center"
-          whileHover={{ scale: 1.1 }}
-          onHoverStart={() => setIsHovered(true)}
-          onHoverEnd={() => setIsHovered(false)}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <Bot size={24} />
-          {isHovered && (
-            <motion.span
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: "auto" }}
-              className="ml-2 whitespace-nowrap overflow-hidden"
-            >
-              Chat with AI
-            </motion.span>
+  // Calculate minimized height
+  const minimizedHeight = "3.5rem";
+  const expandedHeight = "min(30rem, calc(100vh - 8rem))";
+  const expandedWidth = "min(24rem, calc(100vw - 2rem))";
+
+  // Chat toggler button
+  const ChatToggler = () => (
+    <motion.div
+      className="fixed bottom-4 right-4 z-50"
+      initial="initial"
+      animate="animate"
+      variants={chatButtonVariants}
+    >
+      <motion.div 
+        className="h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90 flex items-center justify-center cursor-pointer"
+        onClick={() => setIsOpen(true)}
+        whileHover="hover"
+        whileTap="tap"
+      >
+        <MessageCircle className="h-6 w-6 text-primary-foreground" />
+      </motion.div>
+    </motion.div>
+  );
+
+  // Format timestamp to user-friendly time
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Function to render messages with proper styles
+  const renderMessage = (message: Message) => {
+    const isUser = message.role === "user";
+    const isSystem = message.role === "system";
+    
+    return (
+      <div
+        key={message.id}
+        className={cn(
+          "mb-4 relative",
+          isUser ? "text-right" : "text-left"
+        )}
+      >
+        <div className="flex items-start gap-2 max-w-[85%] mx-0 relative">
+          {!isUser && (
+            <Avatar className="h-8 w-8 mt-0.5">
+              <AvatarImage src="/assets/ai-assistant.svg" />
+              <AvatarFallback>
+                <Bot className="h-4 w-4" />
+              </AvatarFallback>
+            </Avatar>
           )}
-        </motion.button>
-      )}
-
-      <AnimatePresence>
-        {isOpen || useFullScreen ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
+          
+          <div
             className={cn(
-              useFullScreen
-                ? "relative w-full h-full rounded-lg overflow-hidden flex flex-col bg-background border"
-                : "fixed bottom-5 right-5 w-96 h-[32rem] rounded-lg overflow-hidden flex flex-col shadow-xl z-50 bg-background border",
-              className
+              "p-3 rounded-lg inline-block",
+              isUser ? "bg-primary text-primary-foreground ml-auto" : 
+              isSystem ? "bg-muted text-muted-foreground" : 
+              "bg-card border"
             )}
           >
-            {/* Chat Header */}
-            <div className="p-3 border-b flex items-center justify-between bg-secondary/20">
-              <div className="flex items-center">
-                <Bot className="text-primary mr-2" size={20} />
-                <h3 className="font-medium">EchoBot AI Assistant</h3>
-              </div>
-              <div className="flex gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowSettings(!showSettings)}
-                  className="h-8 w-8"
-                >
-                  <Settings size={18} />
-                </Button>
-                {!useFullScreen && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={toggleChat}
-                    className="h-8 w-8"
-                  >
-                    <X size={18} />
-                  </Button>
-                )}
-              </div>
+            <div className="prose prose-sm dark:prose-invert max-w-none">
+              <Markdown>{message.content}</Markdown>
             </div>
-            
-            {/* Settings Panel */}
-            <AnimatePresence>
-              {showSettings && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="border-b overflow-hidden"
-                >
-                  <div className="p-3 space-y-3">
-                    <div>
-                      <label className="text-sm font-medium">AI Model</label>
-                      <select
-                        value={model}
-                        onChange={(e) => setModel(e.target.value)}
-                        className="mt-1 block w-full p-2 bg-background border rounded-md text-sm"
+            <span className="text-xs opacity-70 block mt-1">
+              {formatTime(message.timestamp)}
+            </span>
+          </div>
+          
+          {isUser && (
+            <Avatar className="h-8 w-8 mt-0.5">
+              <AvatarImage src={user?.avatarUrl || ""} />
+              <AvatarFallback>
+                <User className="h-4 w-4" />
+              </AvatarFallback>
+            </Avatar>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  if (!isOpen) {
+    return <ChatToggler />;
+  }
+
+  return (
+    <motion.div 
+      className="fixed bottom-4 right-4 z-50"
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      variants={chatContainerVariants}
+    >
+      <Card 
+        className={cn(
+          "w-full overflow-hidden transition-all duration-300",
+          isMinimized ? "h-[3.5rem]" : "h-[30rem]"
+        )}
+        style={{ 
+          width: isMinimized ? "20rem" : expandedWidth,
+          height: isMinimized ? minimizedHeight : expandedHeight
+        }}
+      >
+        {/* Chat Header */}
+        <CardHeader className="p-3 border-b flex flex-row items-center justify-between">
+          <CardTitle className="text-base font-medium flex items-center">
+            <Bot className="h-5 w-5 mr-2 text-primary" />
+            Echo AI Assistant
+          </CardTitle>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setIsMinimized(!isMinimized)}
+            >
+              {isMinimized ? (
+                <Maximize2 className="h-4 w-4" />
+              ) : (
+                <Minimize2 className="h-4 w-4" />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setIsOpen(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardHeader>
+        
+        {!isMinimized && (
+          <>
+            {/* Chat Messages */}
+            <CardContent className="p-0 overflow-auto h-full">
+              <ScrollArea className="h-[calc(30rem-8rem)] p-4">
+                <div className="flex flex-col">
+                  {messages.map(renderMessage)}
+                  <div ref={messagesEndRef} />
+                  
+                  {/* Loading indicator */}
+                  {isLoading && (
+                    <div className="flex items-center gap-2 text-muted-foreground mb-4">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback>
+                          <Bot className="h-4 w-4" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <motion.div 
+                        className="flex gap-1"
+                        animate={{ y: [0, -5, 0] }}
+                        transition={{ 
+                          repeat: Infinity, 
+                          duration: 1.5,
+                          ease: "easeInOut",
+                          times: [0, 0.2, 0.5, 0.8, 1],
+                          repeatDelay: 0.25
+                        }}
                       >
-                        <option value="gpt-4o">GPT-4o (Recommended)</option>
-                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Faster)</option>
-                      </select>
+                        <div className="h-2 w-2 rounded-full bg-muted-foreground/30" />
+                        <div className="h-2 w-2 rounded-full bg-muted-foreground/30" 
+                          style={{ animationDelay: "0.2s" }} />
+                        <div className="h-2 w-2 rounded-full bg-muted-foreground/30"
+                          style={{ animationDelay: "0.4s" }} />
+                      </motion.div>
                     </div>
-                    <div>
-                      <label className="text-sm font-medium">
-                        Temperature: {temperature}
-                      </label>
-                      <input
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.1"
-                        value={temperature}
-                        onChange={(e) => setTemperature(parseFloat(e.target.value))}
-                        className="w-full"
-                      />
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>Precise</span>
-                        <span>Balanced</span>
-                        <span>Creative</span>
-                      </div>
-                    </div>
-                    <div className="flex justify-end">
-                      <Button variant="ghost" size="sm" onClick={clearChat}>
-                        Clear Chat
-                      </Button>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Messages Container */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  <div
-                    className={`max-w-[80%] rounded-lg p-3 ${
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary"
-                    }`}
-                  >
-                    <div className="flex items-center mb-1">
-                      {message.role === "assistant" ? (
-                        <Bot size={16} className="mr-1" />
-                      ) : (
-                        <User size={16} className="mr-1" />
-                      )}
-                      <span className="text-xs opacity-70">
-                        {message.role === "user" ? user?.username || "You" : "EchoBot"}
-                      </span>
-                    </div>
-                    <div className="whitespace-pre-wrap">{message.content}</div>
-                    <div className="text-xs opacity-50 mt-1 text-right">
-                      {new Date(message.timestamp).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </div>
-                  </div>
+                  )}
                 </div>
-              ))}
-              {chatMutation.isPending && (
-                <div className="flex justify-start">
-                  <div className="max-w-[80%] rounded-lg p-3 bg-secondary flex items-center">
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    <span>Thinking...</span>
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Input Container */}
-            <div className="p-3 border-t">
-              <div className="relative">
-                <Input
+              </ScrollArea>
+            </CardContent>
+            
+            {/* Chat Input */}
+            <CardFooter className="p-3 pt-2 border-t">
+              <div className="relative w-full flex items-end gap-2">
+                <Textarea
                   ref={inputRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Type your message..."
+                  className="min-h-12 w-full resize-none py-3 pr-12"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Type a message..."
-                  className="pr-12"
-                  disabled={chatMutation.isPending}
+                  disabled={isLoading}
                 />
                 <Button
                   size="icon"
-                  className="absolute right-1 top-1 h-8 w-8"
+                  className="absolute right-1 bottom-1 h-10 w-10"
                   onClick={handleSendMessage}
-                  disabled={!input.trim() || chatMutation.isPending}
+                  disabled={!message.trim() || isLoading}
                 >
-                  <Send size={16} />
+                  <Send className="h-4 w-4" />
                 </Button>
               </div>
-              <div className="mt-2 text-center text-xs text-muted-foreground">
-                {!user ? (
-                  <span>Sign in for unlimited access</span>
-                ) : (
-                  <span>AI assistance powered by OpenAI</span>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-    </>
+            </CardFooter>
+          </>
+        )}
+        
+        {isMinimized && (
+          <div className="flex items-center px-3 h-full">
+            <ChevronDown className="h-4 w-4 text-muted-foreground mr-2" />
+            <p className="text-sm text-muted-foreground">
+              {messages.length > 1 
+                ? "Click to continue your conversation" 
+                : "Ask me anything about Echoverse"}
+            </p>
+          </div>
+        )}
+      </Card>
+    </motion.div>
   );
 }
-
-export default AiChatbot;

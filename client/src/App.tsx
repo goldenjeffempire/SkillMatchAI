@@ -8,7 +8,7 @@ import { ThemeProvider } from "@/components/ui/theme-provider";
 import { AuthProvider } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { ErrorBoundary } from "@/components/error-boundary";
-import AiChatbot from "@/components/ai-chatbot";
+import { AIChatbot } from "@/components/ai-chatbot";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
@@ -77,7 +77,7 @@ function GlobalErrorHandler() {
 }
 
 // AI Chatbot wrapper that conditionally shows the chatbot based on the current route
-function AiChatbotWrapper() {
+function AIChatbotWrapper() {
   const [location] = useLocation();
   
   // Don't show chatbot on auth page
@@ -88,7 +88,7 @@ function AiChatbotWrapper() {
     return null;
   }
   
-  return <AiChatbot />;
+  return <AIChatbot />;
 }
 
 function App() {
@@ -101,7 +101,7 @@ function App() {
               <Toaster />
               <GlobalErrorHandler />
               <Router />
-              <AiChatbotWrapper />
+              <AIChatbotWrapper />
             </TooltipProvider>
           </AuthProvider>
         </ThemeProvider>
