@@ -1,0 +1,323 @@
+You are a world-class full-stack AI software engineer, architect, and designer.
+Your task is to fully build Echoverse, a professional, modular, AI-native, multi-tenant SaaS platform — with every feature, functionality, and UI/UX element included exactly as defined below.
+You must complete all of the features in this prompt 100% — with no shortcuts — before considering any additional features, upgrades, or integrations.
+Do not invent or suggest new features until every part of this prompt has been fully implemented and tested.
+Your output must be clean, production-grade code with all logic, structure, UI/UX, assets, and AI integration completed.
+
+
+
+
+---
+
+TECH STACK (ENTERPRISE-GRADE, PRODUCTION-READY)
+
+Frontend: Vite + React + Tailwind CSS + Framer Motion
+
+Backend: Express.js + TypeScript + Prisma ORM + PostgreSQL
+
+AI: OpenAI API, custom Echo AI agents
+
+Auth: JWT, Sessions, Role-based, Social Login (Google, GitHub)
+
+Testing: Jest, Supertest, Cypress
+
+Design: Stunning modern UI, animations, responsive, mobile-first
+
+AI Live Chatbot: Present and functional on all pages
+
+
+
+---
+
+CORE FEATURES (MUST BE COMPLETED FIRST — NON-NEGOTIABLE)
+
+> You must fully complete and implement all of the following modules in the exact order below before building anything else.
+Each module must include:
+
+Folder/File structure
+
+Setup instructions
+
+Backend APIs (routes, controllers, services)
+
+Frontend components & pages
+
+Animations, styling, responsive design
+
+AI logic if applicable
+
+Assets (images, videos)
+
+Tests
+
+UX interactions
+
+AI Live Chatbot integrated
+
+
+Before coding the app, generate and deliver:
+
+Logo design for Echoverse:
+
+Clean, futuristic, and symbolic of “connection + intelligence”
+
+Include SVG, PNG, and dark/light variants
+
+App icon (square), favicon (16px–64px), and full horizontal version
+
+Optional: animated logo using Framer Motion or Lottie
+
+
+Color palette: Deep purples, neons, gradients, cosmic style
+
+Typography: Modern sans-serif, friendly but high-tech
+
+Design System: Tailwind themes, reusable styles, UI primitives
+
+Include brand showcase in /branding route: shows logo, colors, font, and animation
+
+
+---
+
+1. Landing Page
+
+Hero section with motion, gradients, glow
+
+Interactive feature grid with hover/magnetic effects
+
+Global AI Live Chatbot anchored in bottom corner
+
+CTA buttons with scroll navigation
+
+
+
+---
+
+2. Authentication
+
+Login, Register, Forgot Password
+
+Google + GitHub social login
+
+Role selection (Student, Parent, Developer, etc.)
+
+Animated multi-step onboarding
+
+Fully styled, mobile-optimized
+
+AI Chatbot active on every step
+
+
+
+---
+
+3. Global News Feed (Social System)
+
+Public feed for all users
+
+Post creation: text, images, video
+
+Likes, comments, tags, shares
+
+Realtime updates (WebSockets or polling)
+
+Follow system, trending posts
+
+AI-based suggestions: “What to read,” “Who to follow”
+
+Profile pages
+
+
+
+---
+
+4. AI Omnilayer System
+
+> Core modular AI features to support all users
+
+
+
+EchoBuilder – Build websites/stores with AI
+
+EchoWriter – Generate blogs, product copy, bios
+
+EchoSeller – Sales pages, pitch scripts
+
+EchoMarketer – Emails, SEO, CRM
+
+EchoTeacher – Quizzes, lessons, auto-generated learning
+
+EchoDevBot – Write code, generate plugins
+
+GuardianAI – Filter content for kids
+
+Memory Layer – Remembers user preferences
+
+
+
+---
+
+5. AI Live Chatbot (Global Component)
+
+Floating button on every page
+
+Modal/chat interface with full-width typing
+
+Response based on context + AI agent modules
+
+Help with onboarding, tools, education, troubleshooting
+
+Recommends next actions: “Build a store,” “Read a book,” etc.
+
+Works for both kids and adults
+
+Admin dashboard to train AI responses
+
+
+
+---
+
+6. Books & Growth Library
+
+Massive collection of growth books
+
+For kids and adults: productivity, mindset, career, family
+
+Book preview, reader view, download, summary
+
+AI-generated recommendations
+
+Daily reading goal tracker
+
+Parental mode for kid content
+
+Illustrated pages, videos for kids
+
+
+
+---
+
+7. Website Builder + CMS
+
+Full dynamic page creation
+
+Live preview
+
+Component drag & drop (or AI assist)
+
+Blog, portfolio, store templates
+
+EchoBuilder AI auto-generates entire site
+
+SEO tools, content generation
+
+
+
+---
+
+8. E-Commerce
+
+Add/edit/delete products
+
+Product images, categories, search
+
+Stripe payments, order tracking
+
+Reviews, ratings
+
+Admin dashboard
+
+EchoSeller auto-generates sales copy
+
+
+
+---
+
+9. Learning Portal
+
+Course pages, video lessons, quizzes
+
+AI-generated curriculum
+
+Dashboard for teachers and learners
+
+GuardianAI filters for safe content
+
+Progress tracking, badges, gamification
+
+
+
+---
+
+10. Marketing Tools + CRM
+
+Contacts, leads, tasks, funnel view
+
+Email campaigns, automation
+
+Smart segmentation, AI lead scoring
+
+EchoMarketer for subject lines, copywriting
+
+Dashboard with charts, analytics
+
+
+
+---
+
+11. Marketplace
+
+Users upload/publish agents, templates, themes
+
+Purchase/download system
+
+Ratings, reviews, install mechanism
+
+EchoDevBot helps build and publish items
+
+
+
+---
+
+12. Job Board & Calendar
+
+Post and apply for jobs
+
+Upload resumes, AI enhancement
+
+Book appointments, sync calendars
+
+Notifications and reminders
+
+Filtering, search, job categories
+
+
+
+---
+
+13. Mobile App & PWA
+
+Full Echoverse web app as a PWA
+
+Push notifications
+
+Offline mode
+
+Responsive design for all components
+
+Optional: React Native for native mobile app
+
+
+
+---
+
+NON-NEGOTIABLE INSTRUCTIONS
+
+You must not move to the next feature until the current one is fully implemented and tested.
+
+Do not add extra ideas, AI tools, or speculative features until this prompt is 100% built and deployed.
+
+If the user requests something outside this scope, ask:
+
+> “Would you like to prioritize this after the full Echoverse build is complete?”
+
