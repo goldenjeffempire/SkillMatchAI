@@ -91,6 +91,33 @@ function AIChatbotWrapper() {
   return <AIChatbot />;
 }
 
+const routes = {
+  dashboard: {
+    path: '/dashboard',
+    roles: ['user', 'admin', 'business', 'educator'],
+  },
+  social: {
+    path: '/social',
+    roles: ['user', 'admin'],
+  },
+  aiStudio: {
+    path: '/ai-studio',
+    roles: ['user', 'admin', 'business'],
+  },
+  library: {
+    path: '/library',
+    roles: ['user', 'admin', 'educator'],
+  },
+  courses: {
+    path: '/courses',
+    roles: ['user', 'admin', 'educator'],
+  },
+  marketplace: {
+    path: '/marketplace',
+    roles: ['user', 'admin', 'business'],
+  },
+};
+
 function App() {
   return (
     <ErrorBoundary>

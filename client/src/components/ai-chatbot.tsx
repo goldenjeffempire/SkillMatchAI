@@ -1,461 +1,170 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { MessageCircle, Send, X, Maximize2, Minimize2, Bot, User, ChevronDown, Wifi, WifiOff } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/use-auth";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import Markdown from "react-markdown";
+import { useState, useRef, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { MessageSquare, X, Minimize2, Maximize2 } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 interface Message {
   id: string;
-  role: "user" | "assistant" | "system";
+  role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
 }
 
 export function AIChatbot() {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<Message[]>([{
-    id: "welcome-message",
+    id: "welcome",
     role: "assistant",
-    content: "Hello! 👋 I'm Echo, your AI assistant for the Echoverse platform. How can I help you today?",
+    content: "Hello! I'm your AI assistant. How can I help you today?",
     timestamp: new Date()
   }]);
   const [isLoading, setIsLoading] = useState(false);
-  const [wsConnected, setWsConnected] = useState(false);
-  const [streamingResponse, setStreamingResponse] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  const wsRef = useRef<WebSocket | null>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Initialize WebSocket connection
-  useEffect(() => {
-    if (!wsRef.current) {
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
-      
-      const socket = new WebSocket(wsUrl);
-      
-      socket.onopen = () => {
-        console.log("WebSocket connected");
-        setWsConnected(true);
-      };
-      
-      socket.onclose = () => {
-        console.log("WebSocket disconnected");
-        setWsConnected(false);
-      };
-      
-      socket.onerror = (error) => {
-        console.error("WebSocket error:", error);
-        setWsConnected(false);
-      };
-      
-      socket.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          
-          if (data.type === 'chat-response') {
-            if (data.streaming) {
-              // Handle streaming response
-              setStreamingResponse(prev => prev + data.content);
-            } else {
-              // Handle complete response
-              const assistantMessage: Message = {
-                id: generateId(),
-                role: "assistant",
-                content: data.content,
-                timestamp: new Date()
-              };
-              
-              setMessages(prev => [...prev, assistantMessage]);
-              setStreamingResponse("");
-              setIsLoading(false);
-            }
-          }
-        } catch (error) {
-          console.error("Error parsing WebSocket message:", error);
-        }
-      };
-      
-      wsRef.current = socket;
-      
-      // Clean up WebSocket on component unmount
-      return () => {
-        if (socket.readyState === WebSocket.OPEN) {
-          socket.close();
-        }
-      };
-    }
-  }, []);
-
-  // Auto scroll to bottom when new messages are added or streaming updates
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages, streamingResponse]);
-
-  // Focus on input when chat is opened
-  useEffect(() => {
-    if (isOpen && !isMinimized && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isOpen, isMinimized]);
-
-  // Generate a unique ID for messages
-  const generateId = () => {
-    return Date.now().toString(36) + Math.random().toString(36).substring(2);
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleSendMessage = async () => {
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const handleSend = async () => {
     if (!message.trim()) return;
-    
-    // Add user message to chat
-    const userMessage: Message = {
-      id: generateId(),
-      role: "user",
+
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
       content: message,
       timestamp: new Date()
     };
-    
-    setMessages(prev => [...prev, userMessage]);
+
+    setMessages(prev => [...prev, newMessage]);
     setMessage("");
     setIsLoading(true);
-    
-    // Format history for the API
-    const history = messages
-      .filter(msg => msg.role !== "system")
-      .map(msg => ({
-        role: msg.role,
-        content: msg.content
-      }));
-    
-    // Try to use WebSocket if connected
-    if (wsConnected && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      try {
-        // Clear any existing streaming response
-        setStreamingResponse("");
-        
-        // Send message via WebSocket
-        wsRef.current.send(JSON.stringify({
-          type: 'chat-request',
-          message: userMessage.content,
-          history
-        }));
-        
-        // The response will be handled by the onmessage handler
-        // and isLoading will be set to false there
-      } catch (error) {
-        console.error("WebSocket send error:", error);
-        // Fall back to REST API
-        sendMessageViaREST(userMessage.content, history);
-      }
-    } else {
-      // Use REST API if WebSocket not available
-      sendMessageViaREST(userMessage.content, history);
-    }
-  };
-  
-  // Function to send message via REST API (fallback)
-  const sendMessageViaREST = async (content: string, history: { role: string; content: string }[]) => {
+
     try {
-      // Send request to API
-      const response = await apiRequest("POST", "/api/ai/chat", {
-        message: content,
-        history
+      const response = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
       });
-      
+
       const data = await response.json();
-      
-      // Add assistant response to chat
-      const assistantMessage: Message = {
-        id: generateId(),
-        role: "assistant",
+
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        role: 'assistant',
         content: data.response,
         timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, assistantMessage]);
-    } catch (error: any) {
-      console.error("Error sending message:", error);
-      
-      toast({
-        title: "Error",
-        description: "Failed to get a response. Please try again.",
-        variant: "destructive"
-      });
-      
-      // Add error message to chat
-      const errorMessage: Message = {
-        id: generateId(),
-        role: "system",
-        content: "I'm sorry, I couldn't process your request. Please try again later.",
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, errorMessage]);
+      }]);
+    } catch (error) {
+      console.error('Error sending message:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle Enter key to send message
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-  // Animation variants
-  const chatButtonVariants = {
-    initial: { scale: 0.8, opacity: 0 },
-    animate: { scale: 1, opacity: 1, transition: { type: "spring", stiffness: 400, damping: 17 } },
-    tap: { scale: 0.9 },
-    hover: { scale: 1.1 }
-  };
-
-  const chatContainerVariants = {
-    hidden: { opacity: 0, y: 20, scale: 0.95 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      scale: 1,
-      transition: { 
-        type: "spring", 
-        damping: 20, 
-        stiffness: 300
-      }
-    },
-    exit: { 
-      opacity: 0, 
-      y: 20, 
-      scale: 0.95,
-      transition: { duration: 0.2 }
-    }
-  };
-
-  // Calculate minimized height
-  const minimizedHeight = "3.5rem";
-  const expandedHeight = "min(30rem, calc(100vh - 8rem))";
-  const expandedWidth = "min(24rem, calc(100vw - 2rem))";
-
-  // Chat toggler button
-  const ChatToggler = () => (
+  return (
     <motion.div
       className="fixed bottom-4 right-4 z-50"
-      initial="initial"
-      animate="animate"
-      variants={chatButtonVariants}
+      animate={{ scale: isMinimized ? 0.8 : 1 }}
     >
-      <motion.div 
-        className="h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90 flex items-center justify-center cursor-pointer"
-        onClick={() => setIsOpen(true)}
-        whileHover="hover"
-        whileTap="tap"
-      >
-        <MessageCircle className="h-6 w-6 text-primary-foreground" />
-      </motion.div>
-    </motion.div>
-  );
-
-  // Format timestamp to user-friendly time
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
-  // Function to render messages with proper styles
-  const renderMessage = (message: Message) => {
-    const isUser = message.role === "user";
-    const isSystem = message.role === "system";
-    
-    return (
-      <div
-        key={message.id}
-        className={cn(
-          "mb-4 relative",
-          isUser ? "text-right" : "text-left"
-        )}
-      >
-        <div className="flex items-start gap-2 max-w-[85%] mx-0 relative">
-          {!isUser && (
-            <Avatar className="h-8 w-8 mt-0.5">
-              <AvatarImage src="/assets/ai-assistant.svg" />
-              <AvatarFallback>
-                <Bot className="h-4 w-4" />
-              </AvatarFallback>
-            </Avatar>
-          )}
-          
-          <div
-            className={cn(
-              "p-3 rounded-lg inline-block",
-              isUser ? "bg-primary text-primary-foreground ml-auto" : 
-              isSystem ? "bg-muted text-muted-foreground" : 
-              "bg-card border"
-            )}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="mb-4"
           >
-            <div className="prose prose-sm dark:prose-invert max-w-none">
-              <Markdown>{message.content}</Markdown>
-            </div>
-            <span className="text-xs opacity-70 block mt-1">
-              {formatTime(message.timestamp)}
-            </span>
-          </div>
-          
-          {isUser && (
-            <Avatar className="h-8 w-8 mt-0.5">
-              <AvatarImage src={user?.avatarUrl || ""} />
-              <AvatarFallback>
-                <User className="h-4 w-4" />
-              </AvatarFallback>
-            </Avatar>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  if (!isOpen) {
-    return <ChatToggler />;
-  }
-
-  return (
-    <motion.div 
-      className="fixed bottom-4 right-4 z-50"
-      initial="hidden"
-      animate="visible"
-      exit="exit"
-      variants={chatContainerVariants}
-    >
-      <Card 
-        className={cn(
-          "w-full overflow-hidden transition-all duration-300",
-          isMinimized ? "h-[3.5rem]" : "h-[30rem]"
-        )}
-        style={{ 
-          width: isMinimized ? "20rem" : expandedWidth,
-          height: isMinimized ? minimizedHeight : expandedHeight
-        }}
-      >
-        {/* Chat Header */}
-        <CardHeader className="p-3 border-b flex flex-row items-center justify-between">
-          <CardTitle className="text-base font-medium flex items-center">
-            <Bot className="h-5 w-5 mr-2 text-primary" />
-            Echo AI Assistant
-          </CardTitle>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => setIsMinimized(!isMinimized)}
-            >
-              {isMinimized ? (
-                <Maximize2 className="h-4 w-4" />
-              ) : (
-                <Minimize2 className="h-4 w-4" />
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => setIsOpen(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardHeader>
-        
-        {!isMinimized && (
-          <>
-            {/* Chat Messages */}
-            <CardContent className="p-0 overflow-auto h-full">
-              <ScrollArea className="h-[calc(30rem-8rem)] p-4">
-                <div className="flex flex-col">
-                  {messages.map(renderMessage)}
-                  <div ref={messagesEndRef} />
-                  
-                  {/* Loading indicator */}
-                  {isLoading && (
-                    <div className="flex items-center gap-2 text-muted-foreground mb-4">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback>
-                          <Bot className="h-4 w-4" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <motion.div 
-                        className="flex gap-1"
-                        animate={{ y: [0, -5, 0] }}
-                        transition={{ 
-                          repeat: Infinity, 
-                          duration: 1.5,
-                          ease: "easeInOut",
-                          times: [0, 0.2, 0.5, 0.8, 1],
-                          repeatDelay: 0.25
-                        }}
-                      >
-                        <div className="h-2 w-2 rounded-full bg-muted-foreground/30" />
-                        <div className="h-2 w-2 rounded-full bg-muted-foreground/30" 
-                          style={{ animationDelay: "0.2s" }} />
-                        <div className="h-2 w-2 rounded-full bg-muted-foreground/30"
-                          style={{ animationDelay: "0.4s" }} />
-                      </motion.div>
-                    </div>
-                  )}
+            <Card className="w-[350px] shadow-xl">
+              <div className="p-4 border-b flex justify-between items-center">
+                <h3 className="font-semibold">AI Assistant</h3>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setIsMinimized(!isMinimized)}
+                  >
+                    {isMinimized ? <Maximize2 size={18} /> : <Minimize2 size={18} />}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <X size={18} />
+                  </Button>
                 </div>
-              </ScrollArea>
-            </CardContent>
-            
-            {/* Chat Input */}
-            <CardFooter className="p-3 pt-2 border-t">
-              <div className="relative w-full flex items-end gap-2">
-                <Textarea
-                  ref={inputRef}
-                  placeholder="Type your message..."
-                  className="min-h-12 w-full resize-none py-3 pr-12"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  disabled={isLoading}
-                />
-                <Button
-                  size="icon"
-                  className="absolute right-1 bottom-1 h-10 w-10"
-                  onClick={handleSendMessage}
-                  disabled={!message.trim() || isLoading}
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
               </div>
-            </CardFooter>
-          </>
+
+              <div className="p-4 h-[400px] overflow-y-auto">
+                {messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`mb-4 ${
+                      msg.role === 'user' ? 'ml-auto' : 'mr-auto'
+                    }`}
+                  >
+                    <div
+                      className={`p-3 rounded-lg max-w-[80%] ${
+                        msg.role === 'user'
+                          ? 'bg-primary text-primary-foreground ml-auto'
+                          : 'bg-muted'
+                      }`}
+                    >
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+                {isLoading && (
+                  <div className="flex gap-2 p-3 bg-muted rounded-lg w-fit">
+                    <span className="animate-bounce">.</span>
+                    <span className="animate-bounce delay-100">.</span>
+                    <span className="animate-bounce delay-200">.</span>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+
+              <div className="p-4 border-t">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSend();
+                  }}
+                  className="flex gap-2"
+                >
+                  <Input
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Type a message..."
+                    className="flex-1"
+                  />
+                  <Button type="submit" disabled={isLoading}>
+                    Send
+                  </Button>
+                </form>
+              </div>
+            </Card>
+          </motion.div>
         )}
-        
-        {isMinimized && (
-          <div className="flex items-center px-3 h-full">
-            <ChevronDown className="h-4 w-4 text-muted-foreground mr-2" />
-            <p className="text-sm text-muted-foreground">
-              {messages.length > 1 
-                ? "Click to continue your conversation" 
-                : "Ask me anything about Echoverse"}
-            </p>
-          </div>
-        )}
-      </Card>
+      </AnimatePresence>
+
+      <Button
+        size="icon"
+        className="h-12 w-12 rounded-full shadow-lg"
+        onClick={() => setIsOpen(true)}
+      >
+        <MessageSquare size={24} />
+      </Button>
     </motion.div>
   );
 }

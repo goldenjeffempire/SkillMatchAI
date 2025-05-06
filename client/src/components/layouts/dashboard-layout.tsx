@@ -54,6 +54,23 @@ interface SidebarItem {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+const [notificationsOpen, setNotificationsOpen] = useState(false);
+const [notifications, setNotifications] = useState([
+  {
+    id: 1,
+    title: "New Comment",
+    message: "Someone commented on your post",
+    time: "5m ago",
+    read: false
+  },
+  {
+    id: 2, 
+    title: "Course Progress",
+    message: "You've completed 80% of React Basics",
+    time: "1h ago",
+    read: false
+  }
+]);
   const [location, setLocation] = useLocation();
   const { user, logoutMutation } = useAuth();
 
