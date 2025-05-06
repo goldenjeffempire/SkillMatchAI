@@ -454,21 +454,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!name || !type) {
         return res.status(400).json({ message: "Name and type are required" });
       }
-      
-      // For now, we'll simulate creating a project without storage
-      res.status(201).json({
-        id: Date.now(),
+
+      const projectData = {
         userId: req.user!.id,
         name,
-        description,
-        type,
-        settings: {},
+        description: description || "",
+        type: type || "portfolio",
+        settings: {
+          colors: {
+            primary: "#3498db",
+            secondary: "#2ecc71",
+            accent: "#9b59b6"
+          },
+          fonts: {
+            heading: "Montserrat",
+            body: "Open Sans"
+          }
+        },
         status: "draft",
         published: false,
-        publishedUrl: null,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
+        publishedUrl: null
+      };
+      
+      const project = await storage.createProject(projectData);
+      res.status(201).json(project);
     } catch (error) {
       console.error("Error creating project:", error);
       res.status(500).json({ message: "Failed to create project" });
@@ -481,35 +490,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "You must be logged in to view your projects" });
       }
       
-      // Return simulated projects for user
-      res.json([
-        {
-          id: 1,
-          userId: req.user!.id,
-          name: "My Portfolio",
-          description: "Professional portfolio website",
-          type: "portfolio",
-          settings: {},
-          status: "published",
-          published: true,
-          publishedUrl: "https://example.com/portfolio",
-          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
-          updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)  // 2 days ago
-        },
-        {
-          id: 2,
-          userId: req.user!.id,
-          name: "Business Website",
-          description: "Company website for a small business",
-          type: "business",
-          settings: {},
-          status: "draft",
-          published: false,
-          publishedUrl: null,
-          createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-          updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)  // 1 day ago
-        }
-      ]);
+      const projects = await storage.getUserProjects(req.user!.id);
+      res.json(projects);
     } catch (error) {
       console.error("Error fetching projects:", error);
       res.status(500).json({ message: "Failed to fetch projects" });
@@ -528,125 +510,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid project ID" });
       }
       
-      // Simulate getting a project by ID
-      if (projectId === 1) {
-        res.json({
-          id: 1,
-          userId: req.user!.id,
-          name: "My Portfolio",
-          description: "Professional portfolio website",
-          type: "portfolio",
-          settings: {
-            colors: {
-              primary: "#3498db",
-              secondary: "#2ecc71",
-              accent: "#9b59b6"
-            },
-            fonts: {
-              heading: "Montserrat",
-              body: "Open Sans"
-            }
-          },
-          status: "published",
-          published: true,
-          publishedUrl: "https://example.com/portfolio",
-          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-          updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-          components: [
-            {
-              id: 1,
-              projectId: 1,
-              type: "header",
-              content: {
-                title: "John Developer",
-                subtitle: "Full-stack Engineer",
-                cta: "View My Work",
-                backgroundImage: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97"
-              },
-              order: 0
-            },
-            {
-              id: 2,
-              projectId: 1,
-              type: "about",
-              content: {
-                title: "About Me",
-                description: "I'm a passionate developer with over 5 years of experience building web applications...",
-                image: "https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d"
-              },
-              order: 1
-            },
-            {
-              id: 3,
-              projectId: 1,
-              type: "portfolio",
-              content: {
-                title: "My Projects",
-                items: [
-                  { title: "E-commerce Website", image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c" },
-                  { title: "Travel App", image: "https://images.unsplash.com/photo-1476067897447-d0c5df27b5df" },
-                  { title: "Finance Dashboard", image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71" }
-                ]
-              },
-              order: 2
-            }
-          ]
-        });
-      } else if (projectId === 2) {
-        res.json({
-          id: 2,
-          userId: req.user!.id,
-          name: "Business Website",
-          description: "Company website for a small business",
-          type: "business",
-          settings: {
-            colors: {
-              primary: "#e74c3c",
-              secondary: "#f1c40f",
-              accent: "#1abc9c"
-            },
-            fonts: {
-              heading: "Roboto",
-              body: "Lato"
-            }
-          },
-          status: "draft",
-          published: false,
-          publishedUrl: null,
-          createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-          updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-          components: [
-            {
-              id: 4,
-              projectId: 2,
-              type: "header",
-              content: {
-                title: "Acme Corp",
-                subtitle: "Innovative Solutions for Modern Problems",
-                cta: "Learn More",
-                backgroundImage: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab"
-              },
-              order: 0
-            },
-            {
-              id: 5,
-              projectId: 2,
-              type: "services",
-              content: {
-                title: "Our Services",
-                services: [
-                  { title: "Consulting", description: "Expert advice for your business", icon: "lightbulb" },
-                  { title: "Development", description: "Custom software solutions", icon: "code" },
-                  { title: "Support", description: "24/7 technical support", icon: "life-buoy" }
-                ]
-              },
-              order: 1
-            }
-          ]
-        });
-      } else {
+      const project = await storage.getProjectById(projectId);
+      
+      if (!project) {
         return res.status(404).json({ message: "Project not found" });
       }
+      
+      // Check if the project belongs to the authenticated user
+      if (project.userId !== req.user!.id) {
+        return res.status(403).json({ message: "You don't have permission to access this project" });
+      }
+      
+      // Get project components
+      const components = await storage.getProjectComponents(projectId);
+      
+      // Return project with components
+      res.json({
+        ...project,
+        components
+      });
     } catch (error) {
       console.error("Error fetching project:", error);
       res.status(500).json({ message: "Failed to fetch project" });
@@ -665,22 +547,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid project ID" });
       }
       
-      const { name, description, settings, status, published } = req.body;
+      const project = await storage.getProjectById(projectId);
       
-      // Simulate updating a project
-      res.json({
-        id: projectId,
-        userId: req.user!.id,
-        name: name || "Updated Project",
-        description: description || "Updated description",
-        type: "portfolio",
-        settings: settings || {},
-        status: status || "draft",
-        published: published || false,
-        publishedUrl: published ? `https://example.com/project-${projectId}` : null,
-        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        updatedAt: new Date()
-      });
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      // Check if the project belongs to the authenticated user
+      if (project.userId !== req.user!.id) {
+        return res.status(403).json({ message: "You don't have permission to modify this project" });
+      }
+      
+      const updatedProject = await storage.updateProject(projectId, req.body);
+      res.json(updatedProject);
     } catch (error) {
       console.error("Error updating project:", error);
       res.status(500).json({ message: "Failed to update project" });
@@ -699,7 +578,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid project ID" });
       }
       
-      // Simulate deleting a project
+      const project = await storage.getProjectById(projectId);
+      
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      // Check if the project belongs to the authenticated user
+      if (project.userId !== req.user!.id) {
+        return res.status(403).json({ message: "You don't have permission to delete this project" });
+      }
+      
+      await storage.deleteProject(projectId);
       res.status(200).json({ message: "Project deleted successfully" });
     } catch (error) {
       console.error("Error deleting project:", error);

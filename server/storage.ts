@@ -85,7 +85,7 @@ export class MemStorage implements IStorage {
   private projectComponentsMap: Map<number, ProjectComponent>;
   private subscriptionPlansMap: Map<number, SubscriptionPlan>;
   currentId: number;
-  sessionStore: session.SessionStore;
+  sessionStore: any; // Using any to bypass the typing error
 
   constructor() {
     this.usersMap = new Map();
