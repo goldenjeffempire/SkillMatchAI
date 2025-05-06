@@ -6,6 +6,12 @@ import { WebSocketServer } from "ws";
 import { z } from "zod";
 import { insertPostSchema, insertCommentSchema } from "@shared/schema";
 import { generateChatResponse, generateContent } from "./openai";
+import Stripe from "stripe";
+
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
@@ -698,6 +704,213 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting project:", error);
       res.status(500).json({ message: "Failed to delete project" });
+    }
+  });
+  
+  // Subscription and payment routes
+  app.get("/api/subscription-plans", async (req, res) => {
+    try {
+      // Return subscription plans
+      res.json([
+        {
+          id: 1,
+          name: "Free",
+          description: "Basic access to Echoverse tools",
+          features: [
+            "Limited AI content generation",
+            "Basic social features",
+            "Access to free books"
+          ],
+          monthlyPrice: 0,
+          yearlyPrice: 0,
+          stripePriceIdMonthly: null,
+          stripePriceIdYearly: null
+        },
+        {
+          id: 2,
+          name: "Pro",
+          description: "Advanced features for professionals",
+          features: [
+            "Unlimited AI content generation",
+            "Full access to all tools and templates",
+            "Access to premium books",
+            "Priority support"
+          ],
+          monthlyPrice: 1999, // $19.99
+          yearlyPrice: 19999, // $199.99
+          stripePriceIdMonthly: "price_monthly_pro",
+          stripePriceIdYearly: "price_yearly_pro"
+        },
+        {
+          id: 3,
+          name: "Enterprise",
+          description: "Complete solution for businesses",
+          features: [
+            "Everything in Pro",
+            "Team collaboration features",
+            "Advanced analytics",
+            "Dedicated account manager",
+            "Custom branding options"
+          ],
+          monthlyPrice: 4999, // $49.99
+          yearlyPrice: 49999, // $499.99
+          stripePriceIdMonthly: "price_monthly_enterprise",
+          stripePriceIdYearly: "price_yearly_enterprise"
+        }
+      ]);
+    } catch (error) {
+      console.error("Error fetching subscription plans:", error);
+      res.status(500).json({ message: "Failed to fetch subscription plans" });
+    }
+  });
+  
+  // Stripe payment route for one-time payments
+  app.post("/api/create-payment-intent", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to make a payment" });
+      }
+      
+      const { amount } = req.body;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ message: "Invalid amount" });
+      }
+      
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100), // Convert to cents
+        currency: "usd",
+        metadata: {
+          userId: req.user!.id.toString()
+        }
+      });
+      
+      res.json({ clientSecret: paymentIntent.client_secret });
+    } catch (error: any) {
+      console.error("Error creating payment intent:", error);
+      res.status(500).json({ message: "Error creating payment intent: " + error.message });
+    }
+  });
+  
+  // Stripe subscription endpoint
+  app.post('/api/create-subscription', async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to subscribe" });
+      }
+      
+      const { planId, interval } = req.body;
+      
+      if (!planId || !interval || !['month', 'year'].includes(interval)) {
+        return res.status(400).json({ message: "Missing or invalid planId or interval" });
+      }
+      
+      const user = req.user!;
+      
+      // For simplicity, using predefined price IDs
+      let priceId;
+      if (planId === 2) { // Pro plan
+        priceId = interval === 'month' ? 'price_monthly_pro' : 'price_yearly_pro';
+      } else if (planId === 3) { // Enterprise plan
+        priceId = interval === 'month' ? 'price_monthly_enterprise' : 'price_yearly_enterprise';
+      } else {
+        return res.status(400).json({ message: "Invalid plan ID" });
+      }
+      
+      // Check if user already has a Stripe customer ID
+      let customerId = user.stripeCustomerId;
+      
+      if (!customerId) {
+        // Create a new Stripe customer
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: user.fullName || user.username,
+          metadata: {
+            userId: user.id.toString()
+          }
+        });
+        
+        customerId = customer.id;
+        
+        // Update user with Stripe customer ID
+        // In a real implementation, this would update the user in the database
+        // await storage.updateStripeCustomerId(user.id, customerId);
+      }
+      
+      // Create a subscription
+      const subscription = await stripe.subscriptions.create({
+        customer: customerId,
+        items: [{ price: priceId }],
+        payment_behavior: 'default_incomplete',
+        expand: ['latest_invoice.payment_intent'],
+      });
+      
+      // For now, we'll simulate updating the user's subscription info without actually storing it
+      res.json({
+        subscriptionId: subscription.id,
+        clientSecret: (subscription.latest_invoice as any).payment_intent.client_secret,
+      });
+    } catch (error: any) {
+      console.error("Error creating subscription:", error);
+      res.status(500).json({ message: "Error creating subscription: " + error.message });
+    }
+  });
+  
+  // Webhook for handling Stripe events
+  app.post('/api/stripe-webhook', async (req, res) => {
+    const sig = req.headers['stripe-signature'] as string;
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    
+    // In a real implementation, we would verify the webhook signature
+    // if (!endpointSecret) {
+    //   return res.status(400).send('Webhook secret not configured');
+    // }
+    
+    let event;
+    
+    try {
+      // Simulate receiving and processing an event
+      const jsonBody = req.body;
+      event = {
+        type: jsonBody.type,
+        data: { object: jsonBody.data }
+      };
+      
+      // Handle specific event types
+      switch (event.type) {
+        case 'checkout.session.completed':
+          // Handle completed checkout session
+          console.log('Checkout completed');
+          break;
+          
+        case 'invoice.paid':
+          // Handle successful payment
+          console.log('Invoice paid');
+          break;
+          
+        case 'invoice.payment_failed':
+          // Handle failed payment
+          console.log('Payment failed');
+          break;
+          
+        case 'customer.subscription.updated':
+          // Handle subscription update
+          console.log('Subscription updated');
+          break;
+          
+        case 'customer.subscription.deleted':
+          // Handle subscription cancellation
+          console.log('Subscription cancelled');
+          break;
+          
+        default:
+          console.log(`Unhandled event type: ${event.type}`);
+      }
+      
+      res.status(200).json({ received: true });
+    } catch (err: any) {
+      console.error(`Webhook error: ${err.message}`);
+      res.status(400).send(`Webhook Error: ${err.message}`);
     }
   });
   
