@@ -291,6 +291,27 @@ export const readingProgress = pgTable("reading_progress", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Bookmarks
+export const bookmarks = pgTable("bookmarks", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  bookId: integer("book_id").notNull().references(() => books.id, { onDelete: "cascade" }),
+  pageNumber: integer("page_number").notNull(),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Highlights
+export const highlights = pgTable("highlights", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  bookId: integer("book_id").notNull().references(() => books.id, { onDelete: "cascade" }),
+  pageNumber: integer("page_number").notNull(),
+  highlightedText: text("highlighted_text").notNull(),
+  color: text("color").default('yellow'),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Reading goals
 export const readingGoals = pgTable("reading_goals", {
   id: serial("id").primaryKey(),

@@ -12,8 +12,21 @@ export default function BooksPage() {
     category: "",
     age: "",
     genre: "",
-    author: ""
+    author: "",
+    rating: 0,
+    readingTime: "" as "short" | "medium" | "long" | "",
+    language: "",
+    format: "" as "ebook" | "audio" | "pdf" | "",
+    difficulty: "" as "beginner" | "intermediate" | "advanced" | "",
   });
+
+  const filterOptions = {
+    ages: ["0-5", "6-8", "9-12", "13-17", "18+"],
+    genres: ["Fiction", "Non-Fiction", "Business", "Self-Help", "Education", "Parenting"],
+    formats: ["ebook", "audio", "pdf"],
+    difficulties: ["beginner", "intermediate", "advanced"],
+    readingTimes: ["short", "medium", "long"],
+  };
 
   const { data: books, isLoading } = useQuery({
     queryKey: ['books', filters],

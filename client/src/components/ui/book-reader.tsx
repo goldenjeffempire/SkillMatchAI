@@ -13,8 +13,28 @@ interface BookReaderProps {
 
 export function BookReader({ book, isOpen, onClose }: BookReaderProps) {
   const [currentPage, setCurrentPage] = useState(1);
-  const [highlights, setHighlights] = useState<string[]>([]);
-  const [bookmarks, setBookmarks] = useState<number[]>([]);
+  const [highlights, setHighlights] = useState<Array<{
+    text: string;
+    color: string;
+    pageNumber: number;
+  }>>([]);
+  const [bookmarks, setBookmarks] = useState<Array<{
+    pageNumber: number;
+    note?: string;
+  }>>([]);
+  const [selectedText, setSelectedText] = useState("");
+  
+  useEffect(() => {
+    const handleSelection = () => {
+      const selection = window.getSelection();
+      if (selection && selection.toString()) {
+        setSelectedText(selection.toString());
+      }
+    };
+    
+    document.addEventListener('mouseup', handleSelection);
+    return () => document.removeEventListener('mouseup', handleSelection);
+  }, []);
 
   const handleHighlight = (text: string) => {
     setHighlights(prev => [...prev, text]);
