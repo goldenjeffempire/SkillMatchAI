@@ -4,8 +4,8 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { WebSocketServer } from "ws";
 import { z } from "zod";
-import { insertPostSchema, insertCommentSchema } from "@shared/schema";
-import { generateChatResponse, generateContent } from "./openai";
+import { insertPostSchema, insertCommentSchema, insertAiContentSchema } from "@shared/schema";
+import { generateChatResponse, generateContent, analyzeText } from "./openai";
 import Stripe from "stripe";
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -421,23 +421,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Save the generated content to storage if successful
       if (content) {
-        const aiContent = {
+        const validatedData = insertAiContentSchema.safeParse({
           userId: req.user!.id,
           title: options?.title || prompt.substring(0, 50),
           prompt,
           result: content,
           type: type || "general"
-        };
+        });
         
-        // We'll just return the content without storing it for now
-        // to avoid complications with storage implementation
-        res.json({ content, success: true });
+        if (!validatedData.success) {
+          return res.status(400).json({ errors: validatedData.error.errors });
+        }
+        
+        const savedContent = await storage.createAiContent(validatedData.data);
+        res.json({ content: savedContent, success: true });
       } else {
         throw new Error("Failed to generate content");
       }
     } catch (error) {
       console.error("Error generating content:", error);
       res.status(500).json({ message: "Failed to generate content" });
+    }
+  });
+  
+  // AI Content routes
+  app.get("/api/ai-contents", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to view your AI contents" });
+      }
+      
+      const type = req.query.type as string | undefined;
+      const contents = await storage.getUserAiContents(req.user!.id, type);
+      res.json(contents);
+    } catch (error) {
+      console.error("Error fetching AI contents:", error);
+      res.status(500).json({ message: "Failed to fetch AI contents" });
+    }
+  });
+  
+  app.get("/api/ai-contents/:id", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to view AI content" });
+      }
+      
+      const contentId = parseInt(req.params.id);
+      
+      if (isNaN(contentId)) {
+        return res.status(400).json({ message: "Invalid content ID" });
+      }
+      
+      const content = await storage.getAiContentById(contentId);
+      
+      if (!content) {
+        return res.status(404).json({ message: "Content not found" });
+      }
+      
+      // Ensure the user owns the content
+      if (content.userId !== req.user!.id) {
+        return res.status(403).json({ message: "You don't have permission to view this content" });
+      }
+      
+      res.json(content);
+    } catch (error) {
+      console.error("Error fetching AI content:", error);
+      res.status(500).json({ message: "Failed to fetch AI content" });
+    }
+  });
+  
+  // Text Analysis route
+  app.post("/api/analyze-text", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to analyze text" });
+      }
+      
+      const { text, analysisType } = req.body;
+      
+      if (!text) {
+        return res.status(400).json({ message: "Text is required" });
+      }
+      
+      const analysis = await analyzeText(text, analysisType || "general");
+      res.json(analysis);
+    } catch (error) {
+      console.error("Error analyzing text:", error);
+      res.status(500).json({ message: "Failed to analyze text" });
     }
   });
   
