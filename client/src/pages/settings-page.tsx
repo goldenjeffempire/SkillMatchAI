@@ -13,7 +13,7 @@ export default function SettingsPage() {
 
   const handleSave = () => {
     toast({
-      title: "Settings saved",
+      title: "Settings Saved",
       description: "Your settings have been updated successfully."
     });
   };
