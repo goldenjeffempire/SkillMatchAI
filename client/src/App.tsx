@@ -75,7 +75,7 @@ function AIChatbotWrapper() {
 
   // Don't show chatbot on auth page
   const hideChatbotOnRoutes = ["/auth"];
-  const shouldHideChatbot = hideChatbotOnRoutes.some(route => location === route);
+  const shouldHideChatbot = hideChatbotOnRoutes.includes(location);
 
   if (shouldHideChatbot) {
     return null;

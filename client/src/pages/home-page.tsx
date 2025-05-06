@@ -4,11 +4,11 @@ import { FeaturesSection } from "@/components/features-section";
 import { AIToolsSection } from "@/components/ai-tools-section";
 import { LibraryPreviewSection } from "@/components/library-preview-section";
 import { CTASection } from "@/components/cta-section";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useLocation } from "wouter";
 
 export default function HomePage() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   
   // Handle anchor links smoothly
   useEffect(() => {
