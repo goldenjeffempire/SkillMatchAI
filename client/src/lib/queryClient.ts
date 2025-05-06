@@ -66,8 +66,20 @@ export const getQueryFn: <T>(options: {
     }
   };
 
-// Create a simple query client with default behaviors for handling errors
+// Create a query client with error handling
 export const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error, query) => {
+      console.error('Query error:', error);
+      // You could add global error notification here if needed
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error) => {
+      console.error('Mutation error:', error);
+      // You could add global error notification here if needed
+    },
+  }),
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "returnNull" }),
@@ -75,9 +87,13 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       staleTime: Infinity,
       retry: false,
+      // Add more safety measures
+      suspense: false,
+      useErrorBoundary: false,
     },
     mutations: {
       retry: false,
+      useErrorBoundary: false,
     },
   },
 });

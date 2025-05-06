@@ -22,10 +22,46 @@ export function ContentGenerator({ onComplete }: ContentGeneratorProps) {
 
   const generateMutation = useMutation({
     mutationFn: async (data: { prompt: string; type: string; options: { title: string } }) => {
-      const res = await apiRequest("POST", "/api/generate-content", data);
-      return await res.json();
+      try {
+        const res = await apiRequest("POST", "/api/generate-content", data);
+        
+        // Handle authentication errors gracefully
+        if (res.status === 401) {
+          toast({
+            title: "Authentication required",
+            description: "Please log in to generate content",
+            variant: "destructive",
+          });
+          throw new Error("Authentication required");
+        }
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(errorText || "Failed to generate content");
+        }
+        
+        // Parse the JSON response safely
+        try {
+          return await res.json();
+        } catch (jsonError) {
+          console.error("JSON parsing error:", jsonError);
+          throw new Error("Invalid response from server");
+        }
+      } catch (error: any) {
+        console.error("Content generation error:", error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
+      if (!data?.content?.result) {
+        toast({
+          title: "Invalid response",
+          description: "Received an invalid response from the server",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       setGeneratedContent(data.content.result);
       toast({
         title: "Content generated",
@@ -40,9 +76,10 @@ export function ContentGenerator({ onComplete }: ContentGeneratorProps) {
       }
     },
     onError: (error: Error) => {
+      console.error("Content generation mutation error:", error);
       toast({
         title: "Failed to generate content",
-        description: error.message,
+        description: error.message || "An unknown error occurred",
         variant: "destructive",
       });
     },

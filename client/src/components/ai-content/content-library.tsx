@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,20 +20,42 @@ export function ContentLibrary({ onSelectContent }: ContentLibraryProps) {
   const { data: contents, isLoading, error } = useQuery<AiContent[]>({
     queryKey: ["/api/ai-contents", activeTab !== "all" ? activeTab : undefined],
     queryFn: async () => {
-      const url = `/api/ai-contents${activeTab !== "all" ? `?type=${activeTab}` : ""}`;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to fetch AI contents');
-      return response.json();
-    }
+      try {
+        const url = `/api/ai-contents${activeTab !== "all" ? `?type=${activeTab}` : ""}`;
+        const response = await fetch(url, { credentials: 'include' });
+        
+        if (response.status === 401) {
+          // Not authenticated, return empty array instead of throwing
+          return [];
+        }
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch AI contents');
+        }
+        
+        return await response.json();
+      } catch (err) {
+        console.error("Error fetching AI contents:", err);
+        // Return empty array on error to avoid rendering issues
+        return [];
+      }
+    },
+    // Don't retry on failure
+    retry: false
   });
   
-  if (error) {
-    toast({
-      title: "Error",
-      description: "Failed to load your AI content library",
-      variant: "destructive",
-    });
-  }
+  // Show error toast only once when there's an error
+  // but don't throw it to prevent unhandled rejection
+  useEffect(() => {
+    if (error) {
+      console.error("Content library error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load your AI content library",
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
   
   // Function to get badge color based on content type
   const getBadgeVariant = (type: string) => {

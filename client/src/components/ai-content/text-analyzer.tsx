@@ -47,10 +47,46 @@ export function TextAnalyzer({ initialText = "" }: TextAnalyzerProps) {
 
   const analyzeMutation = useMutation({
     mutationFn: async (data: { text: string; analysisType: string }) => {
-      const res = await apiRequest("POST", "/api/analyze-text", data);
-      return await res.json();
+      try {
+        const res = await apiRequest("POST", "/api/analyze-text", data);
+        
+        // Handle authentication errors gracefully
+        if (res.status === 401) {
+          toast({
+            title: "Authentication required",
+            description: "Please log in to analyze text",
+            variant: "destructive",
+          });
+          throw new Error("Authentication required");
+        }
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(errorText || "Failed to analyze text");
+        }
+        
+        // Parse the JSON response safely
+        try {
+          return await res.json();
+        } catch (jsonError) {
+          console.error("JSON parsing error:", jsonError);
+          throw new Error("Invalid response from server");
+        }
+      } catch (error: any) {
+        console.error("Text analysis error:", error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
+      if (!data) {
+        toast({
+          title: "Invalid response",
+          description: "Received an empty response from the server",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       setResult(data);
       toast({
         title: "Analysis complete",
@@ -58,9 +94,10 @@ export function TextAnalyzer({ initialText = "" }: TextAnalyzerProps) {
       });
     },
     onError: (error: Error) => {
+      console.error("Text analysis mutation error:", error);
       toast({
         title: "Analysis failed",
-        description: error.message,
+        description: error.message || "An unknown error occurred",
         variant: "destructive",
       });
     },
