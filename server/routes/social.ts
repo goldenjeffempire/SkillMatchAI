@@ -1,23 +1,34 @@
 
-import { Router } from "express";
-import { storage } from "../storage";
-import { isAuthenticated } from "../auth";
+import { Router } from 'express';
+import { storage } from '../storage';
+import { isAuthenticated } from '../auth';
+import { z } from 'zod';
 
 const router = Router();
 
-// Get posts feed
-router.get("/posts", isAuthenticated, async (req, res) => {
+const createPostSchema = z.object({
+  content: z.string().min(1),
+  mediaUrl: z.string().url().optional(),
+  type: z.enum(['text', 'image', 'video']).default('text'),
+});
+
+const commentSchema = z.object({
+  content: z.string().min(1),
+});
+
+// Get posts feed with filters
+router.get('/posts', isAuthenticated, async (req, res) => {
   try {
-    const { filter = "recent", page = 1 } = req.query;
+    const { filter = 'recent', page = 1 } = req.query;
     const limit = 10;
     const offset = (Number(page) - 1) * limit;
 
     let posts;
     switch (filter) {
-      case "trending":
+      case 'trending':
         posts = await storage.getTrendingPosts(limit, offset);
         break;
-      case "following":
+      case 'following':
         posts = await storage.getFollowingPosts(req.user!.id, limit, offset);
         break;
       default:
@@ -29,6 +40,7 @@ router.get("/posts", isAuthenticated, async (req, res) => {
         const user = await storage.getUser(post.userId);
         const likes = await storage.getPostLikes(post.id);
         const comments = await storage.getPostComments(post.id);
+        const shares = await storage.getPostShares(post.id);
 
         return {
           ...post,
@@ -39,31 +51,27 @@ router.get("/posts", isAuthenticated, async (req, res) => {
           },
           likes: likes.length,
           comments: comments.length,
+          shares: shares.length,
           liked: likes.some((like) => like.userId === req.user!.id),
+          shared: shares.some((share) => share.userId === req.user!.id),
         };
       })
     );
 
     res.json(postsWithMeta);
   } catch (error) {
-    console.error("Error fetching posts:", error);
-    res.status(500).json({ message: "Failed to fetch posts" });
+    console.error('Error fetching posts:', error);
+    res.status(500).json({ message: 'Failed to fetch posts' });
   }
 });
 
 // Create post
-router.post("/posts", isAuthenticated, async (req, res) => {
+router.post('/posts', isAuthenticated, async (req, res) => {
   try {
-    const { content, mediaUrl } = req.body;
-
-    if (!content) {
-      return res.status(400).json({ message: "Content is required" });
-    }
-
+    const data = createPostSchema.parse(req.body);
     const post = await storage.createPost({
       userId: req.user!.id,
-      content,
-      mediaUrl,
+      ...data,
     });
 
     const user = await storage.getUser(post.userId);
@@ -77,55 +85,58 @@ router.post("/posts", isAuthenticated, async (req, res) => {
       },
       likes: 0,
       comments: 0,
+      shares: 0,
       liked: false,
+      shared: false,
     });
   } catch (error) {
-    console.error("Error creating post:", error);
-    res.status(500).json({ message: "Failed to create post" });
+    console.error('Error creating post:', error);
+    res.status(500).json({ message: 'Failed to create post' });
   }
 });
 
-// Like/unlike post
-router.post("/posts/:id/like", isAuthenticated, async (req, res) => {
+// Like/Unlike post
+router.post('/posts/:postId/like', isAuthenticated, async (req, res) => {
   try {
-    const postId = Number(req.params.id);
-    await storage.likePost(postId, req.user!.id);
-    res.json({ message: "Post liked successfully" });
+    const postId = parseInt(req.params.postId);
+    const userId = req.user!.id;
+    
+    const liked = await storage.togglePostLike(postId, userId);
+    res.json({ liked });
   } catch (error) {
-    console.error("Error liking post:", error);
-    res.status(500).json({ message: "Failed to like post" });
+    console.error('Error toggling like:', error);
+    res.status(500).json({ message: 'Failed to toggle like' });
   }
 });
 
-router.delete("/posts/:id/like", isAuthenticated, async (req, res) => {
+// Share post
+router.post('/posts/:postId/share', isAuthenticated, async (req, res) => {
   try {
-    const postId = Number(req.params.id);
-    await storage.unlikePost(postId, req.user!.id);
-    res.json({ message: "Post unliked successfully" });
+    const postId = parseInt(req.params.postId);
+    const userId = req.user!.id;
+    
+    const shared = await storage.sharePost(postId, userId);
+    res.json({ shared });
   } catch (error) {
-    console.error("Error unliking post:", error);
-    res.status(500).json({ message: "Failed to unlike post" });
+    console.error('Error sharing post:', error);
+    res.status(500).json({ message: 'Failed to share post' });
   }
 });
 
 // Add comment
-router.post("/posts/:id/comments", isAuthenticated, async (req, res) => {
+router.post('/posts/:postId/comments', isAuthenticated, async (req, res) => {
   try {
-    const postId = Number(req.params.id);
-    const { content } = req.body;
-
-    if (!content) {
-      return res.status(400).json({ message: "Content is required" });
-    }
-
+    const postId = parseInt(req.params.postId);
+    const data = commentSchema.parse(req.body);
+    
     const comment = await storage.createComment({
       postId,
       userId: req.user!.id,
-      content,
+      content: data.content,
     });
 
     const user = await storage.getUser(comment.userId);
-
+    
     res.status(201).json({
       ...comment,
       user: {
@@ -135,8 +146,8 @@ router.post("/posts/:id/comments", isAuthenticated, async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error creating comment:", error);
-    res.status(500).json({ message: "Failed to create comment" });
+    console.error('Error creating comment:', error);
+    res.status(500).json({ message: 'Failed to create comment' });
   }
 });
 

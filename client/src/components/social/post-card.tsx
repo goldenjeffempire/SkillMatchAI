@@ -1,18 +1,25 @@
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Card } from '@/components/ui/card';
-import { Avatar } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Heart, MessageSquare, Share, MoreVertical } from 'lucide-react';
+import { useState } from "react";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { formatDistanceToNow } from "date-fns";
+import { Heart, MessageCircle, Share, SendHorizontal } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface PostCardProps {
   post: {
-    id: string;
+    id: number;
     content: string;
     mediaUrl?: string;
+    type: 'text' | 'image' | 'video';
+    createdAt: string;
     user: {
-      id: string;
+      id: number;
       name: string;
       avatar: string;
     };
@@ -20,87 +27,161 @@ interface PostCardProps {
     comments: number;
     shares: number;
     liked: boolean;
-    timestamp: Date;
+    shared: boolean;
   };
 }
 
 export function PostCard({ post }: PostCardProps) {
-  const [liked, setLiked] = useState(post.liked);
-  const [likesCount, setLikesCount] = useState(post.likes);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [comment, setComment] = useState("");
+  const [showComments, setShowComments] = useState(false);
 
-  const handleLike = async () => {
-    try {
-      const response = await fetch(`/api/posts/${post.id}/like`, {
-        method: liked ? 'DELETE' : 'POST',
+  const likeMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", `/api/social/posts/${post.id}/like`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/social/posts"] });
+    },
+  });
+
+  const shareMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", `/api/social/posts/${post.id}/share`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/social/posts"] });
+      toast({
+        title: "Post shared",
+        description: "The post has been shared to your profile.",
       });
+    },
+  });
 
-      if (response.ok) {
-        setLiked(!liked);
-        setLikesCount(liked ? likesCount - 1 : likesCount + 1);
-      }
-    } catch (error) {
-      console.error('Error liking post:', error);
-    }
-  };
+  const commentMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", `/api/social/posts/${post.id}/comments`, {
+        content: comment,
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      setComment("");
+      queryClient.invalidateQueries({ queryKey: ["/api/social/posts"] });
+      toast({
+        title: "Comment added",
+        description: "Your comment has been posted successfully.",
+      });
+    },
+  });
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      exit={{ opacity: 0, y: -20 }}
     >
-      <Card className="p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <Avatar src={post.user.avatar} alt={post.user.name} />
-            <div>
-              <h3 className="font-medium">{post.user.name}</h3>
-              <p className="text-sm text-muted-foreground">
-                {new Date(post.timestamp).toLocaleDateString()}
-              </p>
+      <Card>
+        <CardHeader className="flex flex-row items-center gap-4">
+          <Avatar>
+            <AvatarImage src={post.user.avatar} alt={post.user.name} />
+            <AvatarFallback>{post.user.name[0]}</AvatarFallback>
+          </Avatar>
+          <div>
+            <h3 className="font-semibold">{post.user.name}</h3>
+            <p className="text-sm text-muted-foreground">
+              {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+            </p>
+          </div>
+        </CardHeader>
+        
+        <CardContent>
+          <p className="whitespace-pre-wrap mb-4">{post.content}</p>
+          
+          {post.mediaUrl && (
+            <div className="rounded-lg overflow-hidden mb-4">
+              {post.type === 'image' ? (
+                <img src={post.mediaUrl} alt="" className="w-full" />
+              ) : (
+                <video src={post.mediaUrl} controls className="w-full" />
+              )}
             </div>
+          )}
+          
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <span>{post.likes} likes</span>
+            <span>{post.comments} comments</span>
+            <span>{post.shares} shares</span>
           </div>
-          <Button variant="ghost" size="icon">
-            <MoreVertical size={20} />
-          </Button>
-        </div>
-
-        <p className="mb-4">{post.content}</p>
-
-        {post.mediaUrl && (
-          <div className="mb-4 rounded-lg overflow-hidden">
-            <img 
-              src={post.mediaUrl} 
-              alt="Post media" 
-              className="w-full h-auto"
-            />
+        </CardContent>
+        
+        <CardFooter className="flex flex-col gap-4">
+          <div className="flex items-center gap-2 w-full">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-1"
+              onClick={() => likeMutation.mutate()}
+            >
+              <Heart
+                className={`w-4 h-4 mr-2 ${post.liked ? "fill-primary text-primary" : ""}`}
+              />
+              Like
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-1"
+              onClick={() => setShowComments(!showComments)}
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Comment
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-1"
+              onClick={() => shareMutation.mutate()}
+            >
+              <Share
+                className={`w-4 h-4 mr-2 ${post.shared ? "text-primary" : ""}`}
+              />
+              Share
+            </Button>
           </div>
-        )}
-
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="space-x-2"
-            onClick={handleLike}
-          >
-            <Heart
-              size={20}
-              className={liked ? 'fill-red-500 text-red-500' : ''}
-            />
-            <span>{likesCount}</span>
-          </Button>
-
-          <Button variant="ghost" size="sm" className="space-x-2">
-            <MessageSquare size={20} />
-            <span>{post.comments}</span>
-          </Button>
-
-          <Button variant="ghost" size="sm" className="space-x-2">
-            <Share size={20} />
-            <span>{post.shares}</span>
-          </Button>
-        </div>
+          
+          <AnimatePresence>
+            {showComments && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="w-full"
+              >
+                <div className="flex gap-2">
+                  <Textarea
+                    placeholder="Write a comment..."
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button
+                    size="icon"
+                    onClick={() => commentMutation.mutate()}
+                    disabled={!comment.trim()}
+                  >
+                    <SendHorizontal className="w-4 h-4" />
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </CardFooter>
       </Card>
     </motion.div>
   );
