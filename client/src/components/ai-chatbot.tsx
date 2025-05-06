@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { MessageCircle, Send, X, Maximize2, Minimize2, Bot, User, ChevronDown } from "lucide-react";
+import { MessageCircle, Send, X, Maximize2, Minimize2, Bot, User, ChevronDown, Wifi, WifiOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import Markdown from "react-markdown";
@@ -32,15 +33,79 @@ export function AIChatbot() {
     timestamp: new Date()
   }]);
   const [isLoading, setIsLoading] = useState(false);
+  const [wsConnected, setWsConnected] = useState(false);
+  const [streamingResponse, setStreamingResponse] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const wsRef = useRef<WebSocket | null>(null);
 
-  // Auto scroll to bottom when new messages are added
+  // Initialize WebSocket connection
+  useEffect(() => {
+    if (!wsRef.current) {
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      
+      const socket = new WebSocket(wsUrl);
+      
+      socket.onopen = () => {
+        console.log("WebSocket connected");
+        setWsConnected(true);
+      };
+      
+      socket.onclose = () => {
+        console.log("WebSocket disconnected");
+        setWsConnected(false);
+      };
+      
+      socket.onerror = (error) => {
+        console.error("WebSocket error:", error);
+        setWsConnected(false);
+      };
+      
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          if (data.type === 'chat-response') {
+            if (data.streaming) {
+              // Handle streaming response
+              setStreamingResponse(prev => prev + data.content);
+            } else {
+              // Handle complete response
+              const assistantMessage: Message = {
+                id: generateId(),
+                role: "assistant",
+                content: data.content,
+                timestamp: new Date()
+              };
+              
+              setMessages(prev => [...prev, assistantMessage]);
+              setStreamingResponse("");
+              setIsLoading(false);
+            }
+          }
+        } catch (error) {
+          console.error("Error parsing WebSocket message:", error);
+        }
+      };
+      
+      wsRef.current = socket;
+      
+      // Clean up WebSocket on component unmount
+      return () => {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.close();
+        }
+      };
+    }
+  }, []);
+
+  // Auto scroll to bottom when new messages are added or streaming updates
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages]);
+  }, [messages, streamingResponse]);
 
   // Focus on input when chat is opened
   useEffect(() => {
@@ -69,18 +134,46 @@ export function AIChatbot() {
     setMessage("");
     setIsLoading(true);
     
-    try {
-      // Format history for the API
-      const history = messages
-        .filter(msg => msg.role !== "system")
-        .map(msg => ({
-          role: msg.role,
-          content: msg.content
+    // Format history for the API
+    const history = messages
+      .filter(msg => msg.role !== "system")
+      .map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+    
+    // Try to use WebSocket if connected
+    if (wsConnected && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      try {
+        // Clear any existing streaming response
+        setStreamingResponse("");
+        
+        // Send message via WebSocket
+        wsRef.current.send(JSON.stringify({
+          type: 'chat-request',
+          message: userMessage.content,
+          history
         }));
-      
+        
+        // The response will be handled by the onmessage handler
+        // and isLoading will be set to false there
+      } catch (error) {
+        console.error("WebSocket send error:", error);
+        // Fall back to REST API
+        sendMessageViaREST(userMessage.content, history);
+      }
+    } else {
+      // Use REST API if WebSocket not available
+      sendMessageViaREST(userMessage.content, history);
+    }
+  };
+  
+  // Function to send message via REST API (fallback)
+  const sendMessageViaREST = async (content: string, history: { role: string; content: string }[]) => {
+    try {
       // Send request to API
       const response = await apiRequest("POST", "/api/ai/chat", {
-        message: userMessage.content,
+        message: content,
         history
       });
       
