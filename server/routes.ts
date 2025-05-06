@@ -661,6 +661,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Educational content generation endpoint
+  app.post("/api/ai/generate-educational", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to generate educational content" });
+      }
+
+      const { prompt, type, subject } = req.body;
+      
+      if (!prompt || !type) {
+        return res.status(400).json({ message: "Prompt and type are required" });
+      }
+
+      let systemPrompt = "You are an expert educator. ";
+      
+      switch (type) {
+        case "lesson":
+          systemPrompt += "Create a detailed lesson plan with learning objectives, activities, and assessment strategies.";
+          break;
+        case "quiz":
+          systemPrompt += "Generate a comprehensive quiz with varied question types and correct answers.";
+          break;
+        case "interactive":
+          systemPrompt += "Design interactive learning activities that engage students actively in the learning process.";
+          break;
+        case "curriculum":
+          systemPrompt += "Develop a structured curriculum outline with clear progression and learning outcomes.";
+          break;
+      }
+
+      if (subject) {
+        systemPrompt += ` This content is for the subject: ${subject}.`;
+      }
+
+      const { content, id } = await generateContent(prompt, {
+        type: "education",
+        context: systemPrompt,
+        userId: req.user!.id
+      });
+
+      res.json({ content, id });
+    } catch (error) {
+      console.error("Error generating educational content:", error);
+      res.status(500).json({ message: "Failed to generate educational content" });
+    }
+  });
+
   app.post("/api/dev/plugins", async (req, res) => {
     try {
       if (!req.isAuthenticated()) {
