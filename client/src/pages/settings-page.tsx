@@ -1,4 +1,3 @@
-
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,8 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Bell, Key, Lock, User, Shield, Globe, Code, Palette, Volume2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useNotifications } from "@/hooks/use-notifications"; // Added import
+
 
 export default function SettingsPage() {
+  const notifications = useNotifications(); //Initialized notifications
   const { toast } = useToast();
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [marketingEmails, setMarketingEmails] = useState(false);
@@ -25,6 +27,7 @@ export default function SettingsPage() {
       title: "Settings saved",
       description: "Your preferences have been updated successfully."
     });
+    notifications.addNotification({ title: "Settings Saved!", description: "Your settings have been successfully updated." }); // Example notification
   };
 
   return (
