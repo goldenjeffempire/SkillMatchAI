@@ -79,8 +79,7 @@ function AIToolCard({ tool, index, isActive, onClick }: {
 
         <div>
           <motion.h4 
-            className={`text-xl font-semibold mb-2 ${isActive ? "text-primary" : "text-white"}`}
-            animate={{ color: isActive ? "hsl(267, 75%, 60%)" : "white" }}
+            className={`text-xl font-semibold mb-2 transition-colors duration-200 ${isActive ? "text-primary" : "text-white"}`}
           >
             {tool.title}
           </motion.h4>
