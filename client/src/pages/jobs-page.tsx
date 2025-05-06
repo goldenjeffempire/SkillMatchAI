@@ -4,8 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Briefcase, MapPin, Clock, Filter, Plus } from "lucide-react";
+import { Search, Briefcase, MapPin, Clock, Filter, Plus, Calendar as CalendarIcon } from "lucide-react";
 import { useState } from "react";
+import { Calendar } from "@/components/ui/calendar";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 
 interface Job {
   id: string;
@@ -125,9 +128,51 @@ export default function JobsPage() {
                     </p>
                     
                     <div className="flex items-center justify-between">
-                      <div className="text-sm font-medium">$120k - $150k</div>
-                      <Button variant="outline">Apply Now</Button>
-                    </div>
+                        <div className="text-sm font-medium">$120k - $150k</div>
+                        <div className="space-x-2">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <CalendarIcon className="w-4 h-4 mr-2" />
+                                Schedule Interview
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Schedule Interview</DialogTitle>
+                                <DialogDescription>
+                                  Pick a date and time for your interview
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="grid gap-4 py-4">
+                                <Calendar
+                                  mode="single"
+                                  selected={new Date()}
+                                  onSelect={(date) => console.log(date)}
+                                  className="rounded-md border"
+                                />
+                                <Select>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select time" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="9">9:00 AM</SelectItem>
+                                    <SelectItem value="10">10:00 AM</SelectItem>
+                                    <SelectItem value="11">11:00 AM</SelectItem>
+                                    <SelectItem value="13">1:00 PM</SelectItem>
+                                    <SelectItem value="14">2:00 PM</SelectItem>
+                                    <SelectItem value="15">3:00 PM</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <Button onClick={() => console.log("Schedule confirmed")}>
+                                  Confirm Schedule
+                                </Button>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                          <Button variant="default">Apply Now</Button>
+                        </div>
+                      </div>
                   </CardContent>
                 </Card>
               ))}
