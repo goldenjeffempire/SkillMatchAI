@@ -15,7 +15,7 @@ export default function EchoDevPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const generateCode = async () => {
+  const generateCode = () => {
     if (!prompt) {
       toast({
         title: "Input Required",
@@ -26,19 +26,19 @@ export default function EchoDevPage() {
     }
 
     setIsLoading(true);
-    try {
-      const response = await fetch("/api/dev/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, language, type })
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to generate code");
-      }
-
-      const data = await response.json();
-      setResult(data.result);
+    fetch("/api/dev/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt, language, type })
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("Failed to generate code");
+        }
+        return response.json();
+      })
+      .then(data => {
+        setResult(data.result);
     } catch (error) {
       toast({
         title: "Error",
