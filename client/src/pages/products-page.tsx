@@ -1,7 +1,6 @@
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, ShoppingCart, Star, Filter, Plus } from "lucide-react";
 import { useState } from "react";
@@ -18,7 +17,7 @@ interface Product {
   inventory?: number;
 }
 
-export default function ProductsPage() {
+export default function ProductsPageDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
 
