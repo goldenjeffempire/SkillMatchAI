@@ -41,6 +41,11 @@ function Router() {
       <ProtectedRoute path="/projects" component={ProjectsPage} />
       <ProtectedRoute path="/projects/:id" component={ProjectDetailPage} />
       <ProtectedRoute path="/ai-studio" component={AIStudioPage} />
+      <ProtectedRoute path="/users" component={UsersPage} />
+      <ProtectedRoute path="/settings" component={SettingsPage} />
+      <ProtectedRoute path="/products" component={ProductsPage} />
+      <ProtectedRoute path="/customers" component={CustomersPage} />
+      <ProtectedRoute path="/profile" component={ProfilePage} />
       
       <Route component={NotFound} />
     </Switch>
