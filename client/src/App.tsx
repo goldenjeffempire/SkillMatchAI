@@ -23,6 +23,8 @@ import DashboardPage from "@/pages/dashboard-page";
 import SocialPage from "@/pages/social-page";
 import LibraryPage from "@/pages/library-page";
 import { ProtectedRoute } from "@/lib/protected-route";
+import UsersPage from "./pages/users-page"; // Added import
+
 
 function Router() {
   return (
@@ -31,7 +33,7 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <Route path="/branding" component={BrandingPage} />
       <Route path="/subscription" component={SubscriptionPage} />
-      
+
       {/* Protected Routes */}
       <ProtectedRoute path="/dashboard" component={DashboardPage} />
       <ProtectedRoute path="/social" component={SocialPage} />
@@ -41,12 +43,12 @@ function Router() {
       <ProtectedRoute path="/projects" component={ProjectsPage} />
       <ProtectedRoute path="/projects/:id" component={ProjectDetailPage} />
       <ProtectedRoute path="/ai-studio" component={AIStudioPage} />
-      <ProtectedRoute path="/users" component={UsersPage} />
+      <ProtectedRoute path="/users" component={UsersPage} /> {/* Added route */}
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/products" component={ProductsPage} />
       <ProtectedRoute path="/customers" component={CustomersPage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
-      
+
       <Route component={NotFound} />
     </Switch>
   );
@@ -55,12 +57,12 @@ function Router() {
 // Global error handler component with access to toast context
 function GlobalErrorHandler() {
   const { toast } = useToast();
-  
+
   useEffect(() => {
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       event.preventDefault();
       console.error('Unhandled promise rejection:', event.reason);
-      
+
       // Show a toast notification to inform the user
       toast({
         title: "Application Error",
@@ -68,31 +70,31 @@ function GlobalErrorHandler() {
         variant: "destructive",
       });
     };
-    
+
     // Add the event listener
     window.addEventListener('unhandledrejection', handleUnhandledRejection);
-    
+
     // Clean up
     return () => {
       window.removeEventListener('unhandledrejection', handleUnhandledRejection);
     };
   }, [toast]);
-  
+
   return null;
 }
 
 // AI Chatbot wrapper that conditionally shows the chatbot based on the current route
 function AIChatbotWrapper() {
   const [location] = useLocation();
-  
+
   // Don't show chatbot on auth page
   const hideChatbotOnRoutes = ["/auth"];
   const shouldHideChatbot = hideChatbotOnRoutes.some(route => location === route);
-  
+
   if (shouldHideChatbot) {
     return null;
   }
-  
+
   return <AIChatbot />;
 }
 
