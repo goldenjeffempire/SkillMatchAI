@@ -64,11 +64,26 @@ export default function ProjectDetailPage() {
     enabled: !!projectId,
   });
   
+  const { data: componentsData } = useQuery({
+    queryKey: [`/api/projects/${projectId}/components`],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/projects/${projectId}/components`);
+      return res.json();
+    },
+    enabled: !!projectId,
+  });
+  
   useEffect(() => {
     if (data) {
-      setProject(data);
+      setProject(prev => {
+        // If we have components data, merge it with the project data
+        if (componentsData) {
+          return { ...data, components: componentsData };
+        }
+        return data;
+      });
     }
-  }, [data]);
+  }, [data, componentsData]);
   
   const updateProjectMutation = useMutation({
     mutationFn: async (updatedProject: Partial<Project>) => {
@@ -132,6 +147,118 @@ export default function ProjectDetailPage() {
     }
   };
   
+  // Add component mutation
+  const addComponentMutation = useMutation({
+    mutationFn: async (componentData: { type: string; content: any; order: number }) => {
+      const res = await apiRequest("POST", `/api/projects/${projectId}/components`, componentData);
+      return res.json();
+    },
+    onSuccess: (newComponent) => {
+      // Add the new component to the existing components
+      if (project) {
+        const updatedComponents = [...(project.components || []), newComponent];
+        setProject({
+          ...project,
+          components: updatedComponents
+        });
+      }
+      // Invalidate components query to refetch the latest data
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/components`] });
+      toast({
+        title: "Component Added",
+        description: "The component has been added to your project.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to add component: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Update component mutation
+  const updateComponentMutation = useMutation({
+    mutationFn: async ({ componentId, data }: { componentId: number; data: Partial<ProjectComponent> }) => {
+      const res = await apiRequest("PUT", `/api/projects/${projectId}/components/${componentId}`, data);
+      return res.json();
+    },
+    onSuccess: (updatedComponent) => {
+      // Update the component in the existing components array
+      if (project && project.components) {
+        const updatedComponents = project.components.map(component => 
+          component.id === updatedComponent.id ? updatedComponent : component
+        );
+        setProject({
+          ...project,
+          components: updatedComponents
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/components`] });
+      toast({
+        title: "Component Updated",
+        description: "The component has been updated successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to update component: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Delete component mutation
+  const deleteComponentMutation = useMutation({
+    mutationFn: async (componentId: number) => {
+      await apiRequest("DELETE", `/api/projects/${projectId}/components/${componentId}`);
+      return componentId;
+    },
+    onSuccess: (deletedComponentId) => {
+      // Remove the component from the existing components array
+      if (project && project.components) {
+        const updatedComponents = project.components.filter(component => component.id !== deletedComponentId);
+        setProject({
+          ...project,
+          components: updatedComponents
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/components`] });
+      toast({
+        title: "Component Deleted",
+        description: "The component has been removed from your project.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to delete component: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Handler for adding a new component
+  const handleAddComponent = (type: string) => {
+    const newComponent = {
+      type: type.toLowerCase(),
+      content: {
+        title: `New ${type}`,
+        subtitle: `This is a ${type.toLowerCase()} component.`,
+      },
+      order: project?.components?.length || 0
+    };
+    
+    addComponentMutation.mutate(newComponent);
+  };
+
+  // Handler for deleting a component
+  const handleDeleteComponent = (componentId: number) => {
+    deleteComponentMutation.mutate(componentId);
+  };
+
   const handleDragEnd = (result: any) => {
     // Reorder components when drag ends
     if (!result.destination || !project?.components) return;
@@ -151,8 +278,13 @@ export default function ProjectDetailPage() {
       components: updatedComponents
     });
     
-    // Update the backend (not implemented in this version)
-    // updateComponentsOrderMutation.mutate(updatedComponents);
+    // Update component orders in the backend
+    updatedComponents.forEach(component => {
+      updateComponentMutation.mutate({
+        componentId: component.id,
+        data: { order: component.order }
+      });
+    });
   };
   
   if (isLoading) {
@@ -258,9 +390,19 @@ export default function ProjectDetailPage() {
                   <CardContent className="space-y-2">
                     <div className="grid grid-cols-2 gap-2">
                       {["Header", "Hero", "Features", "About", "Services", "Team", "Testimonials", "Contact", "Gallery", "Pricing", "CTA", "Footer"].map((component) => (
-                        <Button key={component} variant="outline" className="h-20 flex flex-col justify-center items-center text-xs">
+                        <Button 
+                          key={component} 
+                          variant="outline" 
+                          className="h-20 flex flex-col justify-center items-center text-xs"
+                          onClick={() => handleAddComponent(component)}
+                          disabled={addComponentMutation.isPending}
+                        >
                           <div className="mb-1">
-                            <Plus className="h-4 w-4" />
+                            {addComponentMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Plus className="h-4 w-4" />
+                            )}
                           </div>
                           {component}
                         </Button>
@@ -283,8 +425,15 @@ export default function ProjectDetailPage() {
                           <p className="text-gray-500 dark:text-gray-400 mb-4">
                             No components added yet
                           </p>
-                          <Button>
-                            <Plus className="mr-2 h-4 w-4" />
+                          <Button 
+                            onClick={() => handleAddComponent("Hero")}
+                            disabled={addComponentMutation.isPending}
+                          >
+                            {addComponentMutation.isPending ? (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                              <Plus className="mr-2 h-4 w-4" />
+                            )}
                             Add First Component
                           </Button>
                         </div>
@@ -330,8 +479,18 @@ export default function ProjectDetailPage() {
                                           <Button size="sm" variant="ghost">
                                             Edit
                                           </Button>
-                                          <Button size="sm" variant="ghost" className="text-red-500">
-                                            <Trash2 className="h-4 w-4" />
+                                          <Button 
+                                            size="sm" 
+                                            variant="ghost" 
+                                            className="text-red-500"
+                                            onClick={() => handleDeleteComponent(component.id)}
+                                            disabled={deleteComponentMutation.isPending && deleteComponentMutation.variables === component.id}
+                                          >
+                                            {deleteComponentMutation.isPending && deleteComponentMutation.variables === component.id ? (
+                                              <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                              <Trash2 className="h-4 w-4" />
+                                            )}
                                           </Button>
                                           
                                           <div className="flex flex-col">
