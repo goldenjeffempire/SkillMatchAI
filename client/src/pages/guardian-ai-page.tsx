@@ -1,33 +1,60 @@
 
-import { DashboardLayout } from "@/components/layouts/dashboard-layout";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
-import { Shield, Book, Filter, AlertTriangle } from "lucide-react";
 import { useState } from "react";
+import { DashboardLayout } from "@/components/layouts/dashboard-layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Shield, Clock, Filter, Search } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 export default function GuardianAIPage() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
   const [settings, setSettings] = useState({
     contentFiltering: true,
-    ageRestriction: "kids",
+    ageRestriction: true,
     safeSearch: true,
-    timeLimit: 60,
+    timeLimit: 120 // minutes
   });
 
-  const handleSave = async () => {
-    try {
+  const { data: savedSettings, isLoading } = useQuery({
+    queryKey: ['guardian-settings'],
+    queryFn: async () => {
+      const res = await fetch('/api/guardian/settings');
+      return res.json();
+    }
+  });
+
+  const updateSettings = useMutation({
+    mutationFn: async (newSettings: typeof settings) => {
       const res = await fetch('/api/guardian/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings)
+        body: JSON.stringify(newSettings)
       });
-      // Handle response
-    } catch (error) {
-      console.error(error);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['guardian-settings'] });
+      toast({
+        title: "Settings Updated",
+        description: "Guardian AI settings have been saved successfully."
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update settings. Please try again.",
+        variant: "destructive"
+      });
     }
+  });
+
+  const handleSave = () => {
+    updateSettings.mutate(settings);
   };
 
   return (
@@ -35,87 +62,103 @@ export default function GuardianAIPage() {
       <div className="container py-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold">GuardianAI</h1>
-            <p className="text-muted-foreground">Smart content filtering and parental controls</p>
+            <h1 className="text-3xl font-bold">Guardian AI</h1>
+            <p className="text-muted-foreground">Manage content filtering and safety settings</p>
           </div>
         </div>
 
-        <Tabs defaultValue="filters" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="filters">
-              <Filter className="w-4 h-4 mr-2" />
-              Content Filters
-            </TabsTrigger>
-            <TabsTrigger value="safety">
-              <Shield className="w-4 h-4 mr-2" />
-              Safety Settings
-            </TabsTrigger>
-            <TabsTrigger value="monitoring">
-              <AlertTriangle className="w-4 h-4 mr-2" />
-              Activity Monitoring
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="filters">
-            <Card className="p-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <label className="font-medium">Content Filtering</label>
-                  <Switch 
-                    checked={settings.contentFiltering}
-                    onCheckedChange={(checked) => 
-                      setSettings(s => ({...s, contentFiltering: checked}))
-                    }
-                  />
+        <div className="grid gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Content Safety Settings</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <div className="flex items-center">
+                    <Filter className="w-4 h-4 mr-2" />
+                    <span className="font-medium">Content Filtering</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Filter inappropriate content and maintain a safe environment
+                  </p>
                 </div>
-
-                <div className="space-y-2">
-                  <label className="font-medium">Age Restriction</label>
-                  <Select
-                    value={settings.ageRestriction}
-                    onValueChange={(value) => 
-                      setSettings(s => ({...s, ageRestriction: value}))
-                    }
-                    options={[
-                      { label: "Kids (5-12)", value: "kids" },
-                      { label: "Teens (13-17)", value: "teens" },
-                      { label: "Young Adult", value: "young-adult" }
-                    ]}
-                  />
-                </div>
-
-                <Button onClick={handleSave}>Save Settings</Button>
+                <Switch
+                  checked={settings.contentFiltering}
+                  onCheckedChange={(checked) => 
+                    setSettings(prev => ({ ...prev, contentFiltering: checked }))
+                  }
+                />
               </div>
-            </Card>
-          </TabsContent>
 
-          <TabsContent value="safety" className="space-y-4">
-            <Card className="p-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <label className="font-medium">Safe Search</label>
-                  <Switch 
-                    checked={settings.safeSearch}
-                    onCheckedChange={(checked) => 
-                      setSettings(s => ({...s, safeSearch: checked}))
-                    }
-                  />
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <div className="flex items-center">
+                    <Shield className="w-4 h-4 mr-2" />
+                    <span className="font-medium">Age Restriction</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Enable age-appropriate content restrictions
+                  </p>
                 </div>
-
-                <div className="space-y-2">
-                  <label className="font-medium">Daily Time Limit (minutes)</label>
-                  <Input 
-                    type="number"
-                    value={settings.timeLimit}
-                    onChange={(e) => 
-                      setSettings(s => ({...s, timeLimit: parseInt(e.target.value)}))
-                    }
-                  />
-                </div>
+                <Switch
+                  checked={settings.ageRestriction}
+                  onCheckedChange={(checked) => 
+                    setSettings(prev => ({ ...prev, ageRestriction: checked }))
+                  }
+                />
               </div>
-            </Card>
-          </TabsContent>
-        </Tabs>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <div className="flex items-center">
+                    <Search className="w-4 h-4 mr-2" />
+                    <span className="font-medium">Safe Search</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Filter search results to exclude inappropriate content
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.safeSearch}
+                  onCheckedChange={(checked) => 
+                    setSettings(prev => ({ ...prev, safeSearch: checked }))
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <Clock className="w-4 h-4 mr-2" />
+                  <span className="font-medium">Daily Time Limit (minutes)</span>
+                </div>
+                <Input
+                  type="number"
+                  value={settings.timeLimit}
+                  onChange={(e) => 
+                    setSettings(prev => ({ 
+                      ...prev, 
+                      timeLimit: parseInt(e.target.value) || 0 
+                    }))
+                  }
+                  min="0"
+                  max="1440"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Set daily usage time limits (0 for unlimited)
+                </p>
+              </div>
+
+              <Button 
+                onClick={handleSave} 
+                className="w-full"
+                disabled={updateSettings.isPending}
+              >
+                Save Settings
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </DashboardLayout>
   );
