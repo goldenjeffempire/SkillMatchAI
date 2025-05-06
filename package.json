@@ -111,5 +111,8 @@
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }

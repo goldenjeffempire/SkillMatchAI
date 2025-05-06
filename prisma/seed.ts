@@ -3,63 +3,99 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  // Seed the "users" table with sample data
+  console.log('🌱 Seeding...');
 
-  const user1 = await prisma.user.create({
-    data: {
-      name: 'John Doe',
-      email: 'john.doe@example.com',
-      password: 'hashedpassword123', // In a real scenario, this should be a hashed password
+  // 1. Seed Skills
+  const skill1 = await prisma.skill.upsert({
+    where: { id: "b9b7dc69-f59a-4b60-bb3e-687c8984e821" },
+    update: {},
+    create: { name: "JavaScript" }
+  });
+
+  const skill2 = await prisma.skill.upsert({
+    where: { id: "eba18dcc-cf60-4a0a-ade5-c7b8afcc2a3a" },
+    update: {},
+    create: { name: "TypeScript" }
+  });
+
+  const skill3 = await prisma.skill.upsert({
+    where: { id: "c0df8a58-3382-4384-9274-3f79107393bc" },
+    update: {},
+    create: { name: "Node.js" }
+  });
+
+  // 2. Seed User
+  const user = await prisma.user.upsert({
+    where: { email: 'jeff@example.com' },
+    update: {},
+    create: {
+      username: 'jeff_dev',
+      email: 'jeff@example.com',
+      password: 'jeff@123',
+      skills: {
+        connect: allSkills.map(skill => ({ id: skill.id })),
+      },
     },
   });
 
-  const user2 = await prisma.user.create({
-    data: {
-      name: 'Jane Smith',
-      email: 'jane.smith@example.com',
-      password: 'hashedpassword456', // In a real scenario, this should be a hashed password
-    },
+  // 3. Seed Company
+  const company = await prisma.company.upsert({
+    where: { name: "Echoverse Inc" },  // Unique name, now allowed
+    update: {},
+    create: {
+      name: "Echoverse Inc",
+      description: "Building the AI-native future of work.",
+      website: "https://echoverse.ai",
+      jobs: {
+        create: [
+          {
+            title: "Full Stack Developer",
+            description: "Join us to build modular AI systems.",
+            location: "Remote",
+            skills: {
+              connect: [
+                { id: skill1.id },
+                { id: skill2.id },
+                { id: skill3.id }
+              ]
+            }
+          }
+        ]
+      }
+    }
   });
 
-  console.log('Created users:', user1, user2);
-
-  // Seed other models as needed (example with a 'posts' table)
-  const post1 = await prisma.post.create({
-    data: {
-      title: 'First Post',
-      content: 'This is the first post!',
-      published: true,
-      authorId: user1.id, // Foreign key reference to the user table
-    },
-  });
-
-  const post2 = await prisma.post.create({
-    data: {
-      title: 'Second Post',
-      content: 'This is the second post!',
-      published: false,
-      authorId: user2.id, // Foreign key reference to the user table
-    },
-  });
-
-  console.log('Created posts:', post1, post2);
-
-  // If you have more models, continue seeding them as well
-  // For example:
-  // await prisma.category.create({
-  //   data: {
-  //     name: 'Technology',
-  //   },
-  // });
-
-  console.log('Seeding complete!');
+  console.log("Seeded company and jobs:", company);
 }
 
-// Execute the seeding process
+  // 4. Seed Application
+  const job = await prisma.job.findFirst({
+    where: { companyId: company.id },
+  });
+
+  if (job) {
+    await prisma.application.upsert({
+      where: {
+        userId_jobId: {
+          userId: user.id,
+          jobId: job.id,
+        },
+      },
+      update: {},
+      create: {
+        userId: user.id,
+        jobId: job.id,
+        status: 'PENDING',
+      },
+    });
+  }
+
+  console.log('✅ Seed complete.');
+}
+
 main()
-  .catch((e) => {
-    console.error('Error during seeding:', e);
-    process.exit(1);
+  .catch(e => {
+    console.error(e);
   })
   .finally(async () => {
     await prisma.$disconnect();

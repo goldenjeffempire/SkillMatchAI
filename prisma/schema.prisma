@@ -1,35 +1,115 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql" // Change this to your DB provider (Postgres, MySQL, etc.)
-  url      = env("DATABASE_URL") // Ensure DATABASE_URL is set in .env
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String   @id @default(uuid())
-  username  String
-  email     String   @unique
-  password  String
-  posts     Post[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String        @id @default(uuid())
+  username         String        @unique
+  email            String        @unique
+  password         String
+  fullName         String?
+  bio              String?
+  location         String?
+  avatarUrl        String?
+  role             UserRole      @default(USER)
+  skills           Skill[]       @relation("UserSkills")
+  applications     Application[]
+  experiences      Experience[]
+  educations       Education[]
+  messagesSent     Message[]     @relation("SentMessages")
+  messagesReceived Message[]     @relation("ReceivedMessages")
+  posts            Post[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  COMPANY
+}
+
+model Company {
+  id          String   @id @default(cuid()) // Unique ID
+  name        String   @unique              // Make `name` unique
+  description String
+  website     String?
+  jobs        Job[]    // Related jobs
+}
+
+model Job {
+  id          String   @id @default(cuid())  // Unique ID
+  title       String
+  description String
+  location    String
+  skills      Skill[]  // Related skills
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+}
+
+model Skill {
+  id   String @id @default(cuid()) // Unique ID
+  name String
+}
+
+model Application {
+  id        String    @id @default(uuid())
+  user      User      @relation(fields: [userId], references: [id])
+  userId    String
+  job       Job       @relation(fields: [jobId], references: [id])
+  jobId     String
+  status    AppStatus @default(PENDING)
+  createdAt DateTime  @default(now())
+}
+
+enum AppStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model Experience {
+  id          String    @id @default(uuid())
+  user        User      @relation(fields: [userId], references: [id])
+  userId      String
+  title       String
+  company     String
+  startDate   DateTime
+  endDate     DateTime?
+  description String?
+}
+
+model Education {
+  id          String    @id @default(uuid())
+  user        User      @relation(fields: [userId], references: [id])
+  userId      String
+  institution String
+  degree      String
+  field       String
+  startDate   DateTime
+  endDate     DateTime?
+  description String?
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  senderId   String
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  receiverId String
+  content    String
+  sentAt     DateTime @default(now())
 }
 
 model Post {
   id        String   @id @default(uuid())
-  title     String
   content   String
-  userId    String
   user      User     @relation(fields: [userId], references: [id])
+  userId    String
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
