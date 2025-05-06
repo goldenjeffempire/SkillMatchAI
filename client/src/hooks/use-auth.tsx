@@ -113,10 +113,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  // Cast the user to SelectUser | null to satisfy TypeScript
+  const safeUser = user as SelectUser | null;
+  
   return (
     <AuthContext.Provider
       value={{
-        user: user ?? null,
+        user: safeUser,
         isLoading,
         error,
         loginMutation,
