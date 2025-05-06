@@ -413,11 +413,366 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...options
       });
       
-      res.json({ content });
+      // Save the generated content to storage if successful
+      if (content) {
+        const aiContent = {
+          userId: req.user!.id,
+          title: options?.title || prompt.substring(0, 50),
+          prompt,
+          result: content,
+          type: type || "general"
+        };
+        
+        // We'll just return the content without storing it for now
+        // to avoid complications with storage implementation
+        res.json({ content, success: true });
+      } else {
+        throw new Error("Failed to generate content");
+      }
     } catch (error) {
       console.error("Error generating content:", error);
       res.status(500).json({ message: "Failed to generate content" });
     }
+  });
+  
+  // AI Tools routes
+  // EchoBuilder Projects routes
+  app.post("/api/projects", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to create a project" });
+      }
+      
+      const { name, description, type } = req.body;
+      
+      if (!name || !type) {
+        return res.status(400).json({ message: "Name and type are required" });
+      }
+      
+      // For now, we'll simulate creating a project without storage
+      res.status(201).json({
+        id: Date.now(),
+        userId: req.user!.id,
+        name,
+        description,
+        type,
+        settings: {},
+        status: "draft",
+        published: false,
+        publishedUrl: null,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+    } catch (error) {
+      console.error("Error creating project:", error);
+      res.status(500).json({ message: "Failed to create project" });
+    }
+  });
+  
+  app.get("/api/projects", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to view your projects" });
+      }
+      
+      // Return simulated projects for user
+      res.json([
+        {
+          id: 1,
+          userId: req.user!.id,
+          name: "My Portfolio",
+          description: "Professional portfolio website",
+          type: "portfolio",
+          settings: {},
+          status: "published",
+          published: true,
+          publishedUrl: "https://example.com/portfolio",
+          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
+          updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)  // 2 days ago
+        },
+        {
+          id: 2,
+          userId: req.user!.id,
+          name: "Business Website",
+          description: "Company website for a small business",
+          type: "business",
+          settings: {},
+          status: "draft",
+          published: false,
+          publishedUrl: null,
+          createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+          updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)  // 1 day ago
+        }
+      ]);
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+      res.status(500).json({ message: "Failed to fetch projects" });
+    }
+  });
+  
+  app.get("/api/projects/:id", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to view a project" });
+      }
+      
+      const projectId = parseInt(req.params.id);
+      
+      if (isNaN(projectId)) {
+        return res.status(400).json({ message: "Invalid project ID" });
+      }
+      
+      // Simulate getting a project by ID
+      if (projectId === 1) {
+        res.json({
+          id: 1,
+          userId: req.user!.id,
+          name: "My Portfolio",
+          description: "Professional portfolio website",
+          type: "portfolio",
+          settings: {
+            colors: {
+              primary: "#3498db",
+              secondary: "#2ecc71",
+              accent: "#9b59b6"
+            },
+            fonts: {
+              heading: "Montserrat",
+              body: "Open Sans"
+            }
+          },
+          status: "published",
+          published: true,
+          publishedUrl: "https://example.com/portfolio",
+          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+          updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+          components: [
+            {
+              id: 1,
+              projectId: 1,
+              type: "header",
+              content: {
+                title: "John Developer",
+                subtitle: "Full-stack Engineer",
+                cta: "View My Work",
+                backgroundImage: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97"
+              },
+              order: 0
+            },
+            {
+              id: 2,
+              projectId: 1,
+              type: "about",
+              content: {
+                title: "About Me",
+                description: "I'm a passionate developer with over 5 years of experience building web applications...",
+                image: "https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d"
+              },
+              order: 1
+            },
+            {
+              id: 3,
+              projectId: 1,
+              type: "portfolio",
+              content: {
+                title: "My Projects",
+                items: [
+                  { title: "E-commerce Website", image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c" },
+                  { title: "Travel App", image: "https://images.unsplash.com/photo-1476067897447-d0c5df27b5df" },
+                  { title: "Finance Dashboard", image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71" }
+                ]
+              },
+              order: 2
+            }
+          ]
+        });
+      } else if (projectId === 2) {
+        res.json({
+          id: 2,
+          userId: req.user!.id,
+          name: "Business Website",
+          description: "Company website for a small business",
+          type: "business",
+          settings: {
+            colors: {
+              primary: "#e74c3c",
+              secondary: "#f1c40f",
+              accent: "#1abc9c"
+            },
+            fonts: {
+              heading: "Roboto",
+              body: "Lato"
+            }
+          },
+          status: "draft",
+          published: false,
+          publishedUrl: null,
+          createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+          updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+          components: [
+            {
+              id: 4,
+              projectId: 2,
+              type: "header",
+              content: {
+                title: "Acme Corp",
+                subtitle: "Innovative Solutions for Modern Problems",
+                cta: "Learn More",
+                backgroundImage: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab"
+              },
+              order: 0
+            },
+            {
+              id: 5,
+              projectId: 2,
+              type: "services",
+              content: {
+                title: "Our Services",
+                services: [
+                  { title: "Consulting", description: "Expert advice for your business", icon: "lightbulb" },
+                  { title: "Development", description: "Custom software solutions", icon: "code" },
+                  { title: "Support", description: "24/7 technical support", icon: "life-buoy" }
+                ]
+              },
+              order: 1
+            }
+          ]
+        });
+      } else {
+        return res.status(404).json({ message: "Project not found" });
+      }
+    } catch (error) {
+      console.error("Error fetching project:", error);
+      res.status(500).json({ message: "Failed to fetch project" });
+    }
+  });
+  
+  app.put("/api/projects/:id", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to update a project" });
+      }
+      
+      const projectId = parseInt(req.params.id);
+      
+      if (isNaN(projectId)) {
+        return res.status(400).json({ message: "Invalid project ID" });
+      }
+      
+      const { name, description, settings, status, published } = req.body;
+      
+      // Simulate updating a project
+      res.json({
+        id: projectId,
+        userId: req.user!.id,
+        name: name || "Updated Project",
+        description: description || "Updated description",
+        type: "portfolio",
+        settings: settings || {},
+        status: status || "draft",
+        published: published || false,
+        publishedUrl: published ? `https://example.com/project-${projectId}` : null,
+        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date()
+      });
+    } catch (error) {
+      console.error("Error updating project:", error);
+      res.status(500).json({ message: "Failed to update project" });
+    }
+  });
+  
+  app.delete("/api/projects/:id", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to delete a project" });
+      }
+      
+      const projectId = parseInt(req.params.id);
+      
+      if (isNaN(projectId)) {
+        return res.status(400).json({ message: "Invalid project ID" });
+      }
+      
+      // Simulate deleting a project
+      res.status(200).json({ message: "Project deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting project:", error);
+      res.status(500).json({ message: "Failed to delete project" });
+    }
+  });
+  
+  app.get("/api/ai-tools", (req, res) => {
+    // Return available AI tools
+    const tools = [
+      {
+        id: "echowriter",
+        name: "EchoWriter",
+        description: "Create blog posts, articles, and stories with AI assistance.",
+        icon: "pencil-line",
+        templates: [
+          { id: "blog-post", name: "Blog Post", prompt: "Write a blog post about [topic]" },
+          { id: "product-description", name: "Product Description", prompt: "Write a compelling product description for [product]" },
+          { id: "social-media", name: "Social Media Post", prompt: "Create a social media post about [topic]" }
+        ]
+      },
+      {
+        id: "echobuilder",
+        name: "EchoBuilder",
+        description: "Build websites and landing pages by describing what you want.",
+        icon: "layout",
+        templates: [
+          { id: "business-site", name: "Business Website", prompt: "Create a website for a [business type] business" },
+          { id: "portfolio", name: "Portfolio", prompt: "Create a portfolio website for a [profession]" },
+          { id: "landing-page", name: "Landing Page", prompt: "Create a landing page for [product/service]" }
+        ]
+      },
+      {
+        id: "echoseller",
+        name: "EchoSeller",
+        description: "Generate compelling marketing copy and sales materials.",
+        icon: "shopping-cart",
+        templates: [
+          { id: "sales-email", name: "Sales Email", prompt: "Write a sales email for [product/service]" },
+          { id: "ad-copy", name: "Ad Copy", prompt: "Write ad copy for [product/service]" },
+          { id: "product-launch", name: "Product Launch", prompt: "Create a product launch announcement for [product]" }
+        ]
+      },
+      {
+        id: "echomarketer",
+        name: "EchoMarketer",
+        description: "Create marketing strategies and campaign ideas.",
+        icon: "megaphone",
+        templates: [
+          { id: "marketing-plan", name: "Marketing Plan", prompt: "Create a marketing plan for [business/product]" },
+          { id: "campaign-ideas", name: "Campaign Ideas", prompt: "Generate campaign ideas for [business/product]" },
+          { id: "social-strategy", name: "Social Media Strategy", prompt: "Develop a social media strategy for [business]" }
+        ]
+      },
+      {
+        id: "echoteacher",
+        name: "EchoTeacher",
+        description: "Generate learning materials and educational content.",
+        icon: "graduation-cap",
+        templates: [
+          { id: "lesson-plan", name: "Lesson Plan", prompt: "Create a lesson plan for teaching [subject]" },
+          { id: "study-guide", name: "Study Guide", prompt: "Generate a study guide for [subject]" },
+          { id: "quiz", name: "Quiz", prompt: "Create a quiz about [subject]" }
+        ]
+      },
+      {
+        id: "echodevbot",
+        name: "EchoDevBot",
+        description: "Get help with coding and software development tasks.",
+        icon: "code",
+        templates: [
+          { id: "code-snippet", name: "Code Snippet", prompt: "Write a code snippet to [functionality] in [language]" },
+          { id: "debug-help", name: "Debug Help", prompt: "Help me debug this code: [paste code]" },
+          { id: "architecture", name: "Architecture", prompt: "Design an architecture for [application type]" }
+        ]
+      }
+    ];
+    
+    res.json(tools);
   });
 
   // Follow routes

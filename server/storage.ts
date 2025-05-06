@@ -1,4 +1,9 @@
-import { users, type User, type InsertUser, posts, comments, likes, books, follows, type Post, type Comment, type Like, type Book, type Follow } from "@shared/schema";
+import { 
+  users, posts, comments, likes, books, follows, aiContents, projects, projectComponents, subscriptionPlans,
+  type User, type InsertUser, type Post, type Comment, type Like, type Book, type Follow,
+  type AiContent, type InsertAiContent, type Project, type InsertProject, 
+  type ProjectComponent, type InsertProjectComponent, type SubscriptionPlan, type InsertSubscriptionPlan
+} from "@shared/schema";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
 import session from "express-session";
@@ -12,6 +17,9 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, userData: Partial<Omit<User, "id" | "password">>): Promise<User>;
+  updateStripeCustomerId(userId: number, stripeCustomerId: string): Promise<User>;
+  updateStripeSubscriptionInfo(userId: number, subscriptionInfo: { stripeCustomerId: string, stripeSubscriptionId: string }): Promise<User>;
   
   // Posts methods
   createPost(post: { userId: number; content: string; mediaUrl?: string }): Promise<Post>;
@@ -38,6 +46,29 @@ export interface IStorage {
   getUserFollowers(userId: number): Promise<Follow[]>;
   getUserFollowing(userId: number): Promise<Follow[]>;
   
+  // AI Content methods
+  createAiContent(content: InsertAiContent): Promise<AiContent>;
+  getAiContentById(id: number): Promise<AiContent | undefined>;
+  getUserAiContents(userId: number, type?: string): Promise<AiContent[]>;
+  
+  // Project methods
+  createProject(project: InsertProject): Promise<Project>;
+  getProjectById(id: number): Promise<Project | undefined>;
+  getUserProjects(userId: number): Promise<Project[]>;
+  updateProject(id: number, project: Partial<Omit<Project, "id" | "userId" | "createdAt" | "updatedAt">>): Promise<Project>;
+  deleteProject(id: number): Promise<void>;
+  
+  // Project Components methods
+  createProjectComponent(component: InsertProjectComponent): Promise<ProjectComponent>;
+  getProjectComponents(projectId: number): Promise<ProjectComponent[]>;
+  updateProjectComponent(id: number, component: Partial<Omit<ProjectComponent, "id" | "projectId" | "createdAt">>): Promise<ProjectComponent>;
+  deleteProjectComponent(id: number): Promise<void>;
+  
+  // Subscription methods
+  getAllSubscriptionPlans(): Promise<SubscriptionPlan[]>;
+  getSubscriptionPlanById(id: number): Promise<SubscriptionPlan | undefined>;
+  getSubscriptionPlanByName(name: string): Promise<SubscriptionPlan | undefined>;
+  
   // Session store
   sessionStore: session.SessionStore;
 }
@@ -49,6 +80,10 @@ export class MemStorage implements IStorage {
   private likesMap: Map<number, Like>;
   private booksMap: Map<number, Book>;
   private followsMap: Map<number, Follow>;
+  private aiContentsMap: Map<number, AiContent>;
+  private projectsMap: Map<number, Project>;
+  private projectComponentsMap: Map<number, ProjectComponent>;
+  private subscriptionPlansMap: Map<number, SubscriptionPlan>;
   currentId: number;
   sessionStore: session.SessionStore;
 
@@ -59,6 +94,10 @@ export class MemStorage implements IStorage {
     this.likesMap = new Map();
     this.booksMap = new Map();
     this.followsMap = new Map();
+    this.aiContentsMap = new Map();
+    this.projectsMap = new Map();
+    this.projectComponentsMap = new Map();
+    this.subscriptionPlansMap = new Map();
     this.currentId = 1;
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // prune expired entries every 24h
