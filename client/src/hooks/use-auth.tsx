@@ -1,11 +1,19 @@
+
 import { create } from "zustand";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "./use-toast";
 
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  role: string;
+}
+
 interface AuthState {
-  user: any | null;
-  setUser: (user: any | null) => void;
+  user: User | null;
+  setUser: (user: User | null) => void;
 }
 
 const useAuthStore = create<AuthState>((set) => ({
@@ -17,7 +25,6 @@ export function useAuth() {
   const { toast } = useToast();
   const { user, setUser } = useAuthStore();
 
-  // Query current user
   const { isLoading } = useQuery({
     queryKey: ["user"],
     queryFn: async () => {
@@ -35,27 +42,20 @@ export function useAuth() {
     },
   });
 
-  // Login mutation
   const loginMutation = useMutation({
     mutationFn: async (credentials: { username: string; password: string }) => {
-      try {
-        const res = await fetch("/api/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(credentials),
-        });
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(credentials),
+      });
 
+      if (!res.ok) {
         const data = await res.json();
-        
-        if (!res.ok) {
-          throw new Error(data.message || "Login failed");
-        }
-
-        return data;
-      } catch (error) {
-        console.error("Login error:", error);
-        throw error;
+        throw new Error(data.message || "Login failed");
       }
+
+      return res.json();
     },
     onSuccess: (data) => {
       setUser(data);
@@ -74,7 +74,6 @@ export function useAuth() {
     },
   });
 
-  // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: async () => {
       const res = await fetch("/api/logout", { method: "POST" });
