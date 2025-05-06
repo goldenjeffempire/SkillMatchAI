@@ -1,7 +1,7 @@
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Search, Briefcase, MapPin, Clock, Filter, Plus } from "lucide-react";
@@ -49,32 +49,34 @@ export default function JobsPage() {
                 
                 <div>
                   <label className="text-sm font-medium mb-2 block">Job Type</label>
-                  <Select
-                    value={selectedType}
-                    onValueChange={setSelectedType}
-                    options={[
-                      { label: "All Types", value: "" },
-                      { label: "Full-time", value: "full-time" },
-                      { label: "Part-time", value: "part-time" },
-                      { label: "Contract", value: "contract" },
-                      { label: "Remote", value: "remote" }
-                    ]}
-                  />
+                  <Select value={selectedType} onValueChange={setSelectedType}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All Types</SelectItem>
+                      <SelectItem value="full-time">Full-time</SelectItem>
+                      <SelectItem value="part-time">Part-time</SelectItem>
+                      <SelectItem value="contract">Contract</SelectItem>
+                      <SelectItem value="remote">Remote</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
                   <label className="text-sm font-medium mb-2 block">Location</label>
-                  <Select
-                    value={selectedLocation}
-                    onValueChange={setSelectedLocation}
-                    options={[
-                      { label: "All Locations", value: "" },
-                      { label: "United States", value: "us" },
-                      { label: "Europe", value: "eu" },
-                      { label: "Asia", value: "asia" },
-                      { label: "Remote", value: "remote" }
-                    ]}
-                  />
+                  <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All Locations</SelectItem>
+                      <SelectItem value="us">United States</SelectItem>
+                      <SelectItem value="eu">Europe</SelectItem>
+                      <SelectItem value="asia">Asia</SelectItem>
+                      <SelectItem value="remote">Remote</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </CardContent>
             </Card>
