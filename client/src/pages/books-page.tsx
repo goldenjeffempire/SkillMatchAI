@@ -23,7 +23,21 @@ export default function BooksPage() {
     progress: "" as "not-started" | "in-progress" | "completed" | "",
     favorite: false,
     hasHighlights: false,
+    recommended: false,
+    aiEnhanced: false,
   });
+
+  const [recommendations, setRecommendations] = useState<typeof books>([]);
+
+  useEffect(() => {
+    // Fetch personalized recommendations based on reading history
+    const fetchRecommendations = async () => {
+      const res = await fetch('/api/books/recommendations');
+      const data = await res.json();
+      setRecommendations(data);
+    };
+    fetchRecommendations();
+  }, []);
 
   const filterOptions = {
     ages: ["0-5", "6-8", "9-12", "13-17", "18+"],
@@ -126,6 +140,33 @@ export default function BooksPage() {
           </div>
         </div>
 
+        {recommendations.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">Recommended for You</h2>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {recommendations.map((book) => (
+                <Card key={book.id} className="p-4 hover:shadow-lg transition-shadow cursor-pointer">
+                  <div className="aspect-[3/4] relative mb-4 bg-muted rounded-lg overflow-hidden group">
+                    {book.coverImage && (
+                      <img
+                        src={book.coverImage}
+                        alt={book.title}
+                        className="object-cover rounded-lg transform transition-transform group-hover:scale-105"
+                      />
+                    )}
+                    <div className="absolute top-2 right-2">
+                      <Badge variant="secondary">Recommended</Badge>
+                    </div>
+                  </div>
+                  <h3 className="font-medium line-clamp-2 mb-1">{book.title}</h3>
+                  <p className="text-sm text-muted-foreground mb-2">{book.author}</p>
+                  <p className="text-xs text-muted-foreground">Based on your reading history</p>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+        
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {books?.map((book: any) => (
             <Card key={book.id} className="p-4 hover:shadow-lg transition-shadow">
