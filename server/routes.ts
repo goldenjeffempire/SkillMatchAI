@@ -597,6 +597,147 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Project components routes
+  app.post("/api/projects/:projectId/components", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to add components to a project" });
+      }
+      
+      const projectId = parseInt(req.params.projectId);
+      
+      if (isNaN(projectId)) {
+        return res.status(400).json({ message: "Invalid project ID" });
+      }
+      
+      const project = await storage.getProjectById(projectId);
+      
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      // Check if the project belongs to the authenticated user
+      if (project.userId !== req.user!.id) {
+        return res.status(403).json({ message: "You don't have permission to modify this project" });
+      }
+      
+      const { type, content, order } = req.body;
+      
+      if (!type || !content) {
+        return res.status(400).json({ message: "Type and content are required" });
+      }
+      
+      const component = await storage.createProjectComponent({
+        projectId,
+        type,
+        content,
+        order: order || 0
+      });
+      
+      res.status(201).json(component);
+    } catch (error) {
+      console.error("Error creating project component:", error);
+      res.status(500).json({ message: "Failed to create project component" });
+    }
+  });
+  
+  app.get("/api/projects/:projectId/components", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to view project components" });
+      }
+      
+      const projectId = parseInt(req.params.projectId);
+      
+      if (isNaN(projectId)) {
+        return res.status(400).json({ message: "Invalid project ID" });
+      }
+      
+      const project = await storage.getProjectById(projectId);
+      
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      // Check if the project belongs to the authenticated user
+      if (project.userId !== req.user!.id) {
+        return res.status(403).json({ message: "You don't have permission to access this project" });
+      }
+      
+      const components = await storage.getProjectComponents(projectId);
+      res.json(components);
+    } catch (error) {
+      console.error("Error fetching project components:", error);
+      res.status(500).json({ message: "Failed to fetch project components" });
+    }
+  });
+  
+  app.put("/api/projects/:projectId/components/:componentId", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to update a project component" });
+      }
+      
+      const projectId = parseInt(req.params.projectId);
+      const componentId = parseInt(req.params.componentId);
+      
+      if (isNaN(projectId) || isNaN(componentId)) {
+        return res.status(400).json({ message: "Invalid project ID or component ID" });
+      }
+      
+      const project = await storage.getProjectById(projectId);
+      
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      // Check if the project belongs to the authenticated user
+      if (project.userId !== req.user!.id) {
+        return res.status(403).json({ message: "You don't have permission to modify this project" });
+      }
+      
+      // Update the component
+      const updatedComponent = await storage.updateProjectComponent(componentId, req.body);
+      res.json(updatedComponent);
+    } catch (error) {
+      console.error("Error updating project component:", error);
+      res.status(500).json({ message: "Failed to update project component" });
+    }
+  });
+  
+  app.delete("/api/projects/:projectId/components/:componentId", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to delete a project component" });
+      }
+      
+      const projectId = parseInt(req.params.projectId);
+      const componentId = parseInt(req.params.componentId);
+      
+      if (isNaN(projectId) || isNaN(componentId)) {
+        return res.status(400).json({ message: "Invalid project ID or component ID" });
+      }
+      
+      const project = await storage.getProjectById(projectId);
+      
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      // Check if the project belongs to the authenticated user
+      if (project.userId !== req.user!.id) {
+        return res.status(403).json({ message: "You don't have permission to modify this project" });
+      }
+      
+      // Delete the component
+      await storage.deleteProjectComponent(componentId);
+      res.status(200).json({ message: "Component deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting project component:", error);
+      res.status(500).json({ message: "Failed to delete project component" });
+    }
+  });
+  
   // Subscription and payment routes
   app.get("/api/subscription-plans", async (req, res) => {
     try {

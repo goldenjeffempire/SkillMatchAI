@@ -8,9 +8,9 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
           <div className="lg:col-span-2">
             <Link href="/">
-              <a className="flex items-center gap-2 mb-6">
+              <div className="flex items-center gap-2 mb-6 cursor-pointer">
                 <Logo />
-              </a>
+              </div>
             </Link>
             <p className="text-gray-400 mb-6">
               The all-in-one AI-native platform for modern businesses and individuals to create, grow, and learn.
