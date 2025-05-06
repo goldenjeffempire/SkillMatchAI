@@ -2,7 +2,10 @@ import { MainLayout } from "@/components/layouts/main-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PackageOpen, ShoppingCart, Star } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Search, Plus, Star, ShoppingCart } from "lucide-react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 interface Product {
   id: number;
@@ -11,43 +14,53 @@ interface Product {
   price: number;
   rating: number;
   category: string;
+  images?: string[];
+  inventory?: number;
 }
 
-const products: Product[] = [
-  {
-    id: 1,
-    name: "AI Content Generator Pro",
-    description: "Generate high-quality content with advanced AI capabilities",
-    price: 49.99,
-    rating: 4.5,
-    category: "AI Tools"
-  },
-  {
-    id: 2,
-    name: "Website Builder Template Pack",
-    description: "Premium templates for building stunning websites",
-    price: 29.99,
-    rating: 4.8,
-    category: "Templates"
-  },
-  // Add more products as needed
-];
-
 export default function ProductsPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+
+  const { data: products = [], isLoading } = useQuery<Product[]>({
+    queryKey: ["products"],
+    queryFn: async () => {
+      const response = await fetch("/api/products");
+      return response.json();
+    }
+  });
+
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         product.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = !selectedCategory || product.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
   return (
     <MainLayout>
       <div className="container py-6 max-w-7xl">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold tracking-tight">Products</h1>
           <Button>
-            <PackageOpen className="w-4 h-4 mr-2" />
+            <Plus className="w-4 h-4 mr-2" />
             Add Product
           </Button>
         </div>
 
+        <div className="relative mb-6">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input 
+            placeholder="Search products..." 
+            className="pl-8" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => (
-            <Card key={product.id}>
+          {filteredProducts.map((product) => (
+            <Card key={product.id} className="group">
               <CardHeader>
                 <CardTitle className="flex justify-between items-start">
                   <span>{product.name}</span>
@@ -55,6 +68,19 @@ export default function ProductsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                <div className="aspect-[3/4] relative mb-4 bg-muted rounded-lg overflow-hidden">
+                  {product.images?.[0] ? (
+                    <img
+                      src={product.images[0]}
+                      alt={product.name}
+                      className="object-cover w-full h-full transform transition-transform group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ShoppingCart className="w-12 h-12 text-muted-foreground/50" />
+                    </div>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground mb-4">{product.description}</p>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
@@ -62,9 +88,10 @@ export default function ProductsPage() {
                     <span>{product.rating}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold">${product.price}</span>
-                    <Button size="sm">
-                      <ShoppingCart className="w-4 h-4" />
+                    <span className="font-semibold">${product.price.toFixed(2)}</span>
+                    <Button size="sm" variant="outline">
+                      <ShoppingCart className="w-4 h-4 mr-2" />
+                      Add to Cart
                     </Button>
                   </div>
                 </div>
