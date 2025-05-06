@@ -55,6 +55,28 @@ export default function BooksPage() {
           />
           <div className="flex gap-4 flex-wrap">
             <Select
+              value={filters.age}
+              onValueChange={(value) => setFilters(f => ({ ...f, age: value }))}
+              options={[
+                { label: "All Ages", value: "" },
+                ...filterOptions.ages.map(age => ({
+                  label: age,
+                  value: age
+                }))
+              ]}
+            />
+            <Select
+              value={filters.genre}
+              onValueChange={(value) => setFilters(f => ({ ...f, genre: value }))}
+              options={[
+                { label: "All Genres", value: "" },
+                ...filterOptions.genres.map(genre => ({
+                  label: genre,
+                  value: genre.toLowerCase()
+                }))
+              ]}
+            />
+            <Select
               value={filters.category}
               onValueChange={(value) => setFilters(f => ({ ...f, category: value }))}
               options={[
@@ -106,18 +128,37 @@ export default function BooksPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {books?.map((book: any) => (
-            <Card key={book.id} className="p-4">
-              <div className="aspect-[3/4] relative mb-4 bg-muted rounded-lg">
+            <Card key={book.id} className="p-4 hover:shadow-lg transition-shadow">
+              <div className="aspect-[3/4] relative mb-4 bg-muted rounded-lg overflow-hidden group">
                 {book.coverImage && (
                   <img
                     src={book.coverImage}
                     alt={book.title}
-                    className="object-cover rounded-lg"
+                    className="object-cover rounded-lg transform transition-transform group-hover:scale-105"
                   />
                 )}
+                {book.progress && (
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary/20">
+                    <div 
+                      className="h-full bg-primary" 
+                      style={{ width: `${book.progress}%` }}
+                    />
+                  </div>
+                )}
               </div>
-              <h3 className="font-medium line-clamp-2">{book.title}</h3>
-              <p className="text-sm text-muted-foreground">{book.author}</p>
+              <h3 className="font-medium line-clamp-2 mb-1">{book.title}</h3>
+              <p className="text-sm text-muted-foreground mb-2">{book.author}</p>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>{book.readTime} min read</span>
+                <span>•</span>
+                <span>{book.genre}</span>
+                {book.aiSummaryAvailable && (
+                  <>
+                    <span>•</span>
+                    <span className="text-primary">AI Summary</span>
+                  </>
+                )}
+              </div>
             </Card>
           ))}
         </div>
