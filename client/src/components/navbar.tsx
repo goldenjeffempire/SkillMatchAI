@@ -31,9 +31,9 @@ export function Navbar() {
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-primary/20">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <Link href="/">
-          <a className="flex items-center gap-2">
+          <div className="flex items-center gap-2 cursor-pointer">
             <Logo />
-          </a>
+          </div>
         </Link>
         
         {/* Desktop Navigation */}
@@ -44,9 +44,9 @@ export function Navbar() {
             
             return (
               <Link key={link.href} href={link.href}>
-                <a className="text-gray-300 hover:text-white transition-colors">
+                <div className="text-gray-300 hover:text-white transition-colors cursor-pointer">
                   {link.label}
-                </a>
+                </div>
               </Link>
             );
           })}
@@ -112,12 +112,12 @@ export function Navbar() {
                 
                 return (
                   <Link key={link.href} href={link.href}>
-                    <a 
-                      className="text-gray-300 hover:text-white transition-colors py-2"
+                    <div 
+                      className="text-gray-300 hover:text-white transition-colors py-2 cursor-pointer"
                       onClick={closeMenu}
                     >
                       {link.label}
-                    </a>
+                    </div>
                   </Link>
                 );
               })}
