@@ -17,7 +17,7 @@ function AIToolCard({ tool, index, isActive, onClick }: {
 }) {
   // Mouse hover animation states
   const [isHovered, setIsHovered] = useState(false);
-  
+
   // Animation variants for the cards
   const cardVariants = {
     hidden: { opacity: 0, x: 20 },
@@ -32,7 +32,7 @@ function AIToolCard({ tool, index, isActive, onClick }: {
       transition: { duration: 0.2 }
     }
   };
-  
+
   // Animated background shine effect
   const shineVariants = {
     hidden: { opacity: 0, x: "-100%" },
@@ -67,7 +67,7 @@ function AIToolCard({ tool, index, isActive, onClick }: {
         initial="hidden"
         animate={isHovered ? "hover" : "hidden"}
       />
-      
+
       <div className="flex items-start gap-4 relative z-10">
         <motion.div 
           className={`w-12 h-12 rounded-lg ${tool.color} flex items-center justify-center shrink-0`}
@@ -76,7 +76,7 @@ function AIToolCard({ tool, index, isActive, onClick }: {
         >
           {tool.icon}
         </motion.div>
-        
+
         <div>
           <motion.h4 
             className={`text-xl font-semibold mb-2 ${isActive ? "text-primary" : "text-white"}`}
@@ -84,11 +84,11 @@ function AIToolCard({ tool, index, isActive, onClick }: {
           >
             {tool.title}
           </motion.h4>
-          
+
           <p className="text-gray-300 text-sm mb-3">
             {tool.description}
           </p>
-          
+
           <div className="flex flex-wrap gap-2">
             {tool.tags.map((tag: string, i: number) => (
               <motion.span 
@@ -104,7 +104,7 @@ function AIToolCard({ tool, index, isActive, onClick }: {
           </div>
         </div>
       </div>
-      
+
       {/* Active indicator */}
       {isActive && (
         <motion.div 
@@ -135,16 +135,16 @@ function AIToolShowcase({ tool }: { tool: any }) {
       transition: { duration: 0.3 } 
     }
   };
-  
+
   const itemVariants = {
     hidden: { opacity: 0, y: 10 },
     visible: { opacity: 1, y: 0 }
   };
-  
+
   // Parallax effect values
   const y = useMotionValue(0);
   const rotate = useTransform(y, [-100, 100], [2, -2]);
-  
+
   return (
     <motion.div 
       className="bg-gray-800/30 backdrop-blur-sm rounded-xl p-8 border border-white/5 relative overflow-hidden"
@@ -160,7 +160,7 @@ function AIToolShowcase({ tool }: { tool: any }) {
       {/* Background glow effects */}
       <div className="absolute -top-20 -right-20 w-64 h-64 bg-primary/20 rounded-full filter blur-[80px]"/>
       <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-accent/20 rounded-full filter blur-[50px]"/>
-      
+
       {/* Tool content */}
       <motion.div 
         className="relative z-10"
@@ -175,14 +175,14 @@ function AIToolShowcase({ tool }: { tool: any }) {
             <p className="text-primary-foreground/70">AI-powered assistant</p>
           </div>
         </div>
-        
+
         <motion.p 
           className="text-gray-300 mb-6"
           variants={itemVariants}
         >
           {tool.description}
         </motion.p>
-        
+
         <motion.div 
           className="bg-gray-900/50 rounded-lg p-4 mb-6 border border-white/5"
           variants={itemVariants}
@@ -205,7 +205,7 @@ function AIToolShowcase({ tool }: { tool: any }) {
             ))}
           </ul>
         </motion.div>
-        
+
         <motion.div 
           className="flex flex-wrap gap-2 mb-6"
           variants={itemVariants}
@@ -220,7 +220,7 @@ function AIToolShowcase({ tool }: { tool: any }) {
             </span>
           ))}
         </motion.div>
-        
+
         <motion.div 
           className="flex gap-3"
           variants={itemVariants}
@@ -240,7 +240,7 @@ function AIToolShowcase({ tool }: { tool: any }) {
 export function AIToolsSection() {
   const [selectedTool, setSelectedTool] = useState(0);
   const sectionRef = useRef<HTMLDivElement>(null);
-  
+
   // Auto rotate tools
   useEffect(() => {
     const interval = setInterval(() => {
@@ -248,13 +248,13 @@ export function AIToolsSection() {
         setSelectedTool(prev => (prev + 1) % aiTools.length);
       }
     }, 5000);
-    
+
     return () => clearInterval(interval);
   }, [selectedTool]);
-  
+
   // Mouse hover state
   const [isHovered, setIsHovered] = useState(false);
-  
+
   const aiTools = [
     {
       title: "EchoWriter",
@@ -386,7 +386,8 @@ export function AIToolsSection() {
           className="absolute top-1/4 left-[20%] w-[400px] h-[400px] bg-primary/15 rounded-full filter blur-[120px]"
           animate={{
             scale: [1, 1.2, 1],
-            opacity: [0.3, 0.15, 0.3]
+            opacity: [0.3, 0.15, 0.3],
+            color: ['rgb(255, 255, 255)', 'rgb(145, 76, 230)', 'rgb(255, 255, 255)']
           }}
           transition={{
             duration: 8,
@@ -408,7 +409,7 @@ export function AIToolsSection() {
           }}
         />
       </div>
-      
+
       <div className="container mx-auto max-w-6xl relative z-10">
         <div className="text-center mb-16">
           <motion.div 
@@ -420,7 +421,7 @@ export function AIToolsSection() {
             <Zap className="w-5 h-5 mr-2" />
             <span>AI OMNILAYER</span>
           </motion.div>
-          
+
           <motion.h2 
             className="text-3xl md:text-5xl font-bold mb-6 text-gradient-animated"
             initial={{ opacity: 0, y: -20 }}
@@ -430,7 +431,7 @@ export function AIToolsSection() {
           >
             Powerful AI Agents For Every Need
           </motion.h2>
-          
+
           <motion.p 
             className="text-gray-300 max-w-2xl mx-auto text-lg"
             initial={{ opacity: 0, y: -20 }}
@@ -441,7 +442,7 @@ export function AIToolsSection() {
             Specialized AI agents that power every aspect of your business, from content creation to sales and development.
           </motion.p>
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
           {/* Left Column: AI Tools List (4 columns on large screens) */}
           <div className="lg:col-span-5 space-y-4">
@@ -453,7 +454,7 @@ export function AIToolsSection() {
             >
               Meet Your AI Team
             </motion.h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
               {aiTools.map((tool, index) => (
                 <AIToolCard
@@ -466,7 +467,7 @@ export function AIToolsSection() {
               ))}
             </div>
           </div>
-          
+
           {/* Right Column: Tool Showcase (8 columns on large screens) */}
           <div className="lg:col-span-7 lg:sticky lg:top-24 h-fit">
             <AnimatePresence mode="wait">
@@ -475,7 +476,7 @@ export function AIToolsSection() {
                 tool={aiTools[selectedTool]} 
               />
             </AnimatePresence>
-            
+
             {/* AI Technology Section */}
             <motion.div 
               className="mt-8 bg-gray-800/20 backdrop-blur-sm rounded-xl p-6 border border-white/5"
@@ -488,11 +489,11 @@ export function AIToolsSection() {
                 <Brain className="h-5 w-5 text-primary" />
                 Advanced AI Technology
               </h4>
-              
+
               <p className="text-gray-300 mb-4">
                 Our AI tools are powered by state-of-the-art large language models and specialized algorithms, fine-tuned for specific business needs.
               </p>
-              
+
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {["Natural Language Processing", "Computer Vision", "Deep Learning", "Multi-modal AI"].map((tech, i) => (
                   <motion.div 
@@ -511,7 +512,7 @@ export function AIToolsSection() {
             </motion.div>
           </div>
         </div>
-        
+
         <motion.div 
           className="text-center"
           initial={{ opacity: 0, y: 20 }}
