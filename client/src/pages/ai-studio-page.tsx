@@ -5,13 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, FileText, BarChart2, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { useLocation } from "wouter";
 import { MainLayout } from "@/components/layouts/main-layout";
 import { AiContent } from "@shared/schema";
 
 export default function AIStudioPage() {
   const { user } = useAuth();
-  const [, navigate] = useLocation();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("generator");
   const [selectedContent, setSelectedContent] = useState<AiContent | null>(null);
