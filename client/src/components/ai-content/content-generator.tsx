@@ -18,12 +18,24 @@ export function ContentGenerator({ onComplete }: ContentGeneratorProps) {
   const [prompt, setPrompt] = useState("");
   const [title, setTitle] = useState("");
   const [type, setType] = useState("blog");
+  const [tone, setTone] = useState("professional");
   const [generatedContent, setGeneratedContent] = useState("");
 
   const generateMutation = useMutation({
-    mutationFn: async (data: { prompt: string; type: string; options: { title: string } }) => {
+    mutationFn: async (data: { 
+      prompt: string; 
+      type: string; 
+      tone?: string;
+      title?: string;
+    }) => {
       try {
-        const res = await apiRequest("POST", "/api/generate-content", data);
+        // Use the new AI API endpoint for content generation
+        const res = await apiRequest("POST", "/api/ai/generate", {
+          prompt: data.prompt,
+          type: data.type,
+          tone: data.tone || "professional",
+          title: data.title
+        });
         
         // Handle authentication errors gracefully
         if (res.status === 401) {
@@ -53,7 +65,7 @@ export function ContentGenerator({ onComplete }: ContentGeneratorProps) {
       }
     },
     onSuccess: (data) => {
-      if (!data?.content?.result) {
+      if (!data?.content) {
         toast({
           title: "Invalid response",
           description: "Received an invalid response from the server",
@@ -62,17 +74,17 @@ export function ContentGenerator({ onComplete }: ContentGeneratorProps) {
         return;
       }
       
-      setGeneratedContent(data.content.result);
+      setGeneratedContent(data.content);
       toast({
         title: "Content generated",
         description: "Your content has been successfully generated and saved.",
       });
       
       // Invalidate ai-contents queries to refresh the list
-      queryClient.invalidateQueries({ queryKey: ["/api/ai-contents"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ai/contents"] });
       
-      if (onComplete && data.content.id) {
-        onComplete(data.content.id);
+      if (onComplete && data.id) {
+        onComplete(data.id);
       }
     },
     onError: (error: Error) => {
@@ -100,9 +112,8 @@ export function ContentGenerator({ onComplete }: ContentGeneratorProps) {
     generateMutation.mutate({
       prompt,
       type,
-      options: {
-        title: title || prompt.substring(0, 50),
-      },
+      tone,
+      title: title || prompt.substring(0, 50),
     });
   };
 
@@ -131,25 +142,48 @@ export function ContentGenerator({ onComplete }: ContentGeneratorProps) {
             />
           </div>
           
-          <div className="space-y-2">
-            <label htmlFor="type" className="text-sm font-medium">
-              Content Type
-            </label>
-            <Select value={type} onValueChange={setType}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select content type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="blog">Blog Post</SelectItem>
-                <SelectItem value="marketing">Marketing Copy</SelectItem>
-                <SelectItem value="social">Social Media Post</SelectItem>
-                <SelectItem value="email">Email</SelectItem>
-                <SelectItem value="product">Product Description</SelectItem>
-                <SelectItem value="seo">SEO Content</SelectItem>
-                <SelectItem value="creative">Creative Writing</SelectItem>
-                <SelectItem value="technical">Technical Documentation</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label htmlFor="type" className="text-sm font-medium">
+                Content Type
+              </label>
+              <Select value={type} onValueChange={setType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select content type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="blog">Blog Post</SelectItem>
+                  <SelectItem value="marketing">Marketing Copy</SelectItem>
+                  <SelectItem value="social">Social Media Post</SelectItem>
+                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="product">Product Description</SelectItem>
+                  <SelectItem value="seo">SEO Content</SelectItem>
+                  <SelectItem value="creative">Creative Writing</SelectItem>
+                  <SelectItem value="technical">Technical Documentation</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <label htmlFor="tone" className="text-sm font-medium">
+                Tone
+              </label>
+              <Select value={tone} onValueChange={setTone}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select tone" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="professional">Professional</SelectItem>
+                  <SelectItem value="casual">Casual</SelectItem>
+                  <SelectItem value="enthusiastic">Enthusiastic</SelectItem>
+                  <SelectItem value="informative">Informative</SelectItem>
+                  <SelectItem value="persuasive">Persuasive</SelectItem>
+                  <SelectItem value="humorous">Humorous</SelectItem>
+                  <SelectItem value="formal">Formal</SelectItem>
+                  <SelectItem value="friendly">Friendly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           
           <div className="space-y-2">
