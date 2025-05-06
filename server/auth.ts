@@ -55,14 +55,14 @@ async function sendVerificationEmail(user: User, origin: string): Promise<void> 
   });
 
   const verificationToken = uuidv4();
-  
+
   // Store the verification token in the database
   await db.update(users)
     .set({ verificationToken })
     .where(eq(users.id, user.id));
-  
+
   const verificationUrl = `${origin}/verify-email?token=${verificationToken}`;
-  
+
   const info = await transporter.sendMail({
     from: '"Echoverse" <no-reply@echoverse.com>',
     to: user.email,
@@ -70,7 +70,7 @@ async function sendVerificationEmail(user: User, origin: string): Promise<void> 
     text: `Please verify your email address by clicking this link: ${verificationUrl}`,
     html: `<p>Please verify your email address by clicking this link: <a href="${verificationUrl}">${verificationUrl}</a></p>`,
   });
-  
+
   console.log("Verification email sent: %s", info.messageId);
   console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
 }
@@ -78,7 +78,7 @@ async function sendVerificationEmail(user: User, origin: string): Promise<void> 
 async function sendPasswordResetEmail(email: string, origin: string): Promise<void> {
   const user = await storage.getUserByEmail(email);
   if (!user) return; // Don't reveal if the email exists
-  
+
   const testAccount = await nodemailer.createTestAccount();
   const transporter = nodemailer.createTransport({
     host: "smtp.ethereal.email",
@@ -89,11 +89,11 @@ async function sendPasswordResetEmail(email: string, origin: string): Promise<vo
       pass: testAccount.pass,
     },
   });
-  
+
   const resetToken = crypto.randomBytes(32).toString("hex");
   const resetExpires = new Date();
   resetExpires.setHours(resetExpires.getHours() + 1); // Token valid for 1 hour
-  
+
   // Store the reset token and expiry in the database
   await db.update(users)
     .set({ 
@@ -101,9 +101,9 @@ async function sendPasswordResetEmail(email: string, origin: string): Promise<vo
       resetPasswordExpires: resetExpires
     })
     .where(eq(users.id, user.id));
-  
+
   const resetUrl = `${origin}/reset-password?token=${resetToken}`;
-  
+
   const info = await transporter.sendMail({
     from: '"Echoverse" <no-reply@echoverse.com>',
     to: user.email,
@@ -111,7 +111,7 @@ async function sendPasswordResetEmail(email: string, origin: string): Promise<vo
     text: `Reset your password by clicking this link: ${resetUrl}. This link is valid for 1 hour.`,
     html: `<p>Reset your password by clicking this link: <a href="${resetUrl}">${resetUrl}</a>. This link is valid for 1 hour.</p>`,
   });
-  
+
   console.log("Password reset email sent: %s", info.messageId);
   console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
 }
@@ -173,7 +173,7 @@ export function setupAuth(app: Express): void {
 
           // Remove the password before passing the user
           const { password: _, ...userWithoutPassword } = user;
-          
+
           // Update last login time
           await db.update(users)
             .set({ lastLoginAt: new Date() })
@@ -229,7 +229,7 @@ export function setupAuth(app: Express): void {
 
               // Filter out password
               const { password: _, ...userWithoutPassword } = user;
-              
+
               // Update last login time
               await db.update(users)
                 .set({ lastLoginAt: new Date() })
@@ -259,7 +259,7 @@ export function setupAuth(app: Express): void {
 
               // Filter out password
               const { password: _, ...userWithoutPassword } = existingUser;
-              
+
               // Update last login time
               await db.update(users)
                 .set({ lastLoginAt: new Date() })
@@ -271,7 +271,7 @@ export function setupAuth(app: Express): void {
             // Create a new user and account
             const name = profile.displayName || `${profile.name?.givenName || ''} ${profile.name?.familyName || ''}`.trim();
             const username = `google_${profile.id}`;
-            
+
             const newUser = await storage.createUser({
               username,
               email,
@@ -349,7 +349,7 @@ export function setupAuth(app: Express): void {
 
               // Filter out password
               const { password: _, ...userWithoutPassword } = user;
-              
+
               // Update last login time
               await db.update(users)
                 .set({ lastLoginAt: new Date() })
@@ -378,7 +378,7 @@ export function setupAuth(app: Express): void {
 
               // Filter out password
               const { password: _, ...userWithoutPassword } = existingUser;
-              
+
               // Update last login time
               await db.update(users)
                 .set({ lastLoginAt: new Date() })
@@ -390,7 +390,7 @@ export function setupAuth(app: Express): void {
             // Create a new user and account
             const name = profile.displayName || profile.username || "";
             const username = `github_${profile.id}`;
-            
+
             const newUser = await storage.createUser({
               username,
               email,
@@ -448,29 +448,29 @@ export function setupAuth(app: Express): void {
     try {
       // Validate input
       const { username, email, password, confirmPassword, role } = req.body;
-      
+
       if (!username || !email || !password) {
         return res.status(400).json({ message: "All fields are required" });
       }
-      
+
       if (password !== confirmPassword) {
         return res.status(400).json({ message: "Passwords do not match" });
       }
-      
+
       // Check if the username or email already exists
       const existingUsername = await storage.getUserByUsername(username);
       if (existingUsername) {
         return res.status(400).json({ message: "Username already exists" });
       }
-      
+
       const existingEmail = await storage.getUserByEmail(email);
       if (existingEmail) {
         return res.status(400).json({ message: "Email already exists" });
       }
-      
+
       // Hash the password
       const hashedPassword = await hashPassword(password);
-      
+
       // Create the user
       const user = await storage.createUser({
         username,
@@ -480,17 +480,17 @@ export function setupAuth(app: Express): void {
         onboardingCompleted: false,
         onboardingStep: 1,
       });
-      
+
       // Send verification email
       const origin = `${req.protocol}://${req.get('host')}`;
       await sendVerificationEmail(user, origin);
-      
+
       // Login the user
       req.login(user, (err) => {
         if (err) {
           return next(err);
         }
-        
+
         // Return the user without password
         const { password: _, ...userWithoutPassword } = user;
         return res.status(201).json(userWithoutPassword);
@@ -509,7 +509,7 @@ export function setupAuth(app: Express): void {
       if (!user) {
         return res.status(401).json({ message: info.message || "Authentication failed" });
       }
-      
+
       req.login(user, (loginErr) => {
         if (loginErr) {
           return next(loginErr);
@@ -541,21 +541,21 @@ export function setupAuth(app: Express): void {
   app.get("/api/verify-email", async (req, res, next) => {
     try {
       const { token } = req.query;
-      
+
       if (!token || typeof token !== "string") {
         return res.status(400).json({ message: "Invalid token" });
       }
-      
+
       // Find the user with this token
       const [user] = await db
         .select()
         .from(users)
         .where(eq(users.verificationToken, token));
-      
+
       if (!user) {
         return res.status(400).json({ message: "Invalid or expired token" });
       }
-      
+
       // Update the user
       await db
         .update(users)
@@ -564,7 +564,7 @@ export function setupAuth(app: Express): void {
           verificationToken: null,
         })
         .where(eq(users.id, user.id));
-      
+
       return res.status(200).json({ message: "Email verified successfully" });
     } catch (error) {
       next(error);
@@ -575,15 +575,15 @@ export function setupAuth(app: Express): void {
   app.post("/api/forgot-password", async (req, res, next) => {
     try {
       const { email } = req.body;
-      
+
       if (!email) {
         return res.status(400).json({ message: "Email is required" });
       }
-      
+
       // Always return success to avoid leaking whether an email exists
       const origin = `${req.protocol}://${req.get('host')}`;
       await sendPasswordResetEmail(email, origin);
-      
+
       return res.status(200).json({ message: "If an account with that email exists, a password reset link has been sent" });
     } catch (error) {
       next(error);
@@ -594,29 +594,29 @@ export function setupAuth(app: Express): void {
   app.post("/api/reset-password", async (req, res, next) => {
     try {
       const { token, password, confirmPassword } = req.body;
-      
+
       if (!token || !password || password !== confirmPassword) {
         return res.status(400).json({ message: "Invalid input" });
       }
-      
+
       // Find the user with this token
       const [user] = await db
         .select()
         .from(users)
         .where(eq(users.resetPasswordToken, token));
-      
+
       if (!user) {
         return res.status(400).json({ message: "Invalid or expired token" });
       }
-      
+
       // Check if the token is expired
       if (user.resetPasswordExpires && user.resetPasswordExpires < new Date()) {
         return res.status(400).json({ message: "Token has expired" });
       }
-      
+
       // Hash the new password
       const hashedPassword = await hashPassword(password);
-      
+
       // Update the user
       await db
         .update(users)
@@ -626,7 +626,7 @@ export function setupAuth(app: Express): void {
           resetPasswordExpires: null,
         })
         .where(eq(users.id, user.id));
-      
+
       return res.status(200).json({ message: "Password reset successfully" });
     } catch (error) {
       next(error);
@@ -642,7 +642,7 @@ export function setupAuth(app: Express): void {
         onboardingStep, onboardingCompleted, role, 
         preferences 
       } = req.body;
-      
+
       // Only allow updating these fields
       const updatedUser = await storage.updateUser(userId, {
         fullName, 
@@ -656,7 +656,7 @@ export function setupAuth(app: Express): void {
         preferences,
         updatedAt: new Date(),
       });
-      
+
       return res.status(200).json(updatedUser);
     } catch (error) {
       next(error);
@@ -668,30 +668,30 @@ export function setupAuth(app: Express): void {
     try {
       const userId = req.user.id;
       const { currentPassword, newPassword, confirmPassword } = req.body;
-      
+
       if (!currentPassword || !newPassword || newPassword !== confirmPassword) {
         return res.status(400).json({ message: "Invalid input" });
       }
-      
+
       // Get the user with password
       const [user] = await db
         .select()
         .from(users)
         .where(eq(users.id, userId));
-      
+
       if (!user || !user.password) {
         return res.status(400).json({ message: "User has no password (social login)" });
       }
-      
+
       // Verify the current password
       const isValid = await comparePasswords(currentPassword, user.password);
       if (!isValid) {
         return res.status(400).json({ message: "Current password is incorrect" });
       }
-      
+
       // Hash the new password
       const hashedPassword = await hashPassword(newPassword);
-      
+
       // Update the user
       await db
         .update(users)
@@ -700,7 +700,7 @@ export function setupAuth(app: Express): void {
           updatedAt: new Date(),
         })
         .where(eq(users.id, userId));
-      
+
       return res.status(200).json({ message: "Password changed successfully" });
     } catch (error) {
       next(error);
@@ -745,4 +745,28 @@ export function setupAuth(app: Express): void {
       }
     );
   }
+
+  // Add demo user if it doesn't exist
+  app.get("/api/create-demo-user", async (req, res) => {
+    try {
+      const demoUser = await storage.getUserByUsername("demo_user");
+      if (!demoUser) {
+        const hashedPassword = await hashPassword("Demo@123");
+        const newUser = await storage.createUser({
+          username: "demo_user",
+          email: "demo@example.com",
+          password: hashedPassword,
+          role: "user",
+          emailVerified: true,
+          onboardingCompleted: true,
+          onboardingStep: 5
+        });
+        return res.json({ message: "Demo user created" });
+      }
+      return res.json({ message: "Demo user already exists" });
+    } catch (error) {
+      console.error("Error creating demo user:", error);
+      return res.status(500).json({ message: "Failed to create demo user" });
+    }
+  });
 }
