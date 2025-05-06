@@ -163,3 +163,33 @@ export default function UsersPage() {
     </MainLayout>
   );
 }
+import { DashboardLayout } from "@/components/layouts/dashboard-layout";
+import { DataTable } from "@/components/ui/table";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+
+export default function UsersPage() {
+  const { data: users, isLoading } = useQuery({
+    queryKey: ["users"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/users");
+      return res.json();
+    }
+  });
+
+  return (
+    <DashboardLayout>
+      <div className="container py-6">
+        <h1 className="text-3xl font-bold mb-6">Users</h1>
+        {isLoading ? (
+          <div>Loading...</div>
+        ) : (
+          <div className="rounded-md border">
+            {/* Table implementation will go here */}
+            <pre>{JSON.stringify(users, null, 2)}</pre>
+          </div>
+        )}
+      </div>
+    </DashboardLayout>
+  );
+}
