@@ -1,30 +1,88 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, primaryKey, date, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// User model
+export type AuthProviderType = "google" | "github" | "credentials";
+
+// User model with enhanced fields for authentication and profiles
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+  password: text("password"),  // Can be null for social login
   email: text("email").notNull().unique(),
+  emailVerified: boolean("email_verified").default(false),
+  verificationToken: text("verification_token"),
   fullName: text("full_name"),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
   avatar: text("avatar"),
-  role: text("role").notNull().default("user"),
+  role: text("role").notNull().default("user"),  // user, student, parent, developer, admin
   bio: text("bio"),
+  onboardingCompleted: boolean("onboarding_completed").default(false),
+  onboardingStep: integer("onboarding_step").default(1),
+  preferences: jsonb("preferences").default({}),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   subscriptionTier: text("subscription_tier").default("free"),
+  resetPasswordToken: text("reset_password_token"),
+  resetPasswordExpires: timestamp("reset_password_expires"),
+  lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-  email: true,
-  fullName: true,
-  role: true,
+// Social auth accounts linked to users
+export const accounts = pgTable("accounts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  provider: text("provider").notNull(), // "google", "github"
+  providerAccountId: text("provider_account_id").notNull(), 
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  expiresAt: timestamp("expires_at"),
+  tokenType: text("token_type"),
+  scope: text("scope"),
+  idToken: text("id_token"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => {
+  return {
+    providerIdx: uniqueIndex("provider_idx").on(table.provider, table.providerAccountId),
+  };
 });
+
+// Sessions for users
+export const sessions = pgTable("sessions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  sessionToken: text("session_token").notNull().unique(),
+  expires: timestamp("expires").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User role permissions
+export const rolePermissions = pgTable("role_permissions", {
+  id: serial("id").primaryKey(),
+  role: text("role").notNull().unique(),
+  permissions: jsonb("permissions").notNull().default([]),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertUserSchema = createInsertSchema(users)
+  .pick({
+    username: true,
+    password: true,
+    email: true,
+    fullName: true,
+    firstName: true,
+    lastName: true,
+    role: true,
+  })
+  .extend({
+    confirmPassword: z.string().optional(),
+  });
 
 // Posts for social feed
 export const posts = pgTable("posts", {
@@ -172,7 +230,279 @@ export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans
   createdAt: true,
 });
 
-// Type exports
+// Social feed enhance tables
+export const tags = pgTable("tags", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const postTags = pgTable("post_tags", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
+  tagId: integer("tag_id").notNull().references(() => tags.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const shares = pgTable("shares", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  platform: text("platform"), // facebook, twitter, etc.
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// News feed 
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  type: text("type").notNull(), // like, comment, follow, mention, etc.
+  content: text("content").notNull(),
+  read: boolean("read").default(false),
+  relatedUserId: integer("related_user_id").references(() => users.id, { onDelete: "cascade" }),
+  relatedPostId: integer("related_post_id").references(() => posts.id, { onDelete: "cascade" }),
+  relatedCommentId: integer("related_comment_id").references(() => comments.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Reading progress for books
+export const readingProgress = pgTable("reading_progress", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  bookId: integer("book_id").notNull().references(() => books.id, { onDelete: "cascade" }),
+  progress: integer("progress").default(0), // percentage 0-100
+  lastReadAt: timestamp("last_read_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Reading goals
+export const readingGoals = pgTable("reading_goals", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  goalType: text("goal_type").notNull(), // daily, weekly, monthly
+  targetValue: integer("target_value").notNull(), // number of books, pages, minutes
+  startDate: date("start_date").notNull(),
+  endDate: date("end_date"),
+  completed: boolean("completed").default(false),
+  progress: integer("progress").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Website templates for EchoBuilder
+export const templates = pgTable("templates", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  thumbnail: text("thumbnail"),
+  category: text("category").notNull(), // blog, portfolio, store, etc.
+  content: jsonb("content").notNull(), // template data structure
+  isPublic: boolean("is_public").default(true),
+  creatorId: integer("creator_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// E-Commerce products
+export const products = pgTable("products", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  price: integer("price").notNull(), // in cents
+  images: jsonb("images").default([]),
+  category: text("category"),
+  tags: jsonb("tags").default([]),
+  inventory: integer("inventory"),
+  published: boolean("published").default(false),
+  stripePriceId: text("stripe_price_id"),
+  stripeProductId: text("stripe_product_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Reviews for products
+export const reviews = pgTable("reviews", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id),
+  rating: integer("rating").notNull(), // 1-5
+  content: text("content"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Orders
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  status: text("status").notNull().default("pending"), // pending, paid, shipped, delivered, cancelled
+  total: integer("total").notNull(), // in cents
+  paymentIntentId: text("payment_intent_id"),
+  shippingAddress: jsonb("shipping_address"),
+  billingAddress: jsonb("billing_address"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Order Items
+export const orderItems = pgTable("order_items", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  productId: integer("product_id").notNull().references(() => products.id),
+  quantity: integer("quantity").notNull(),
+  price: integer("price").notNull(), // in cents at time of purchase
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Courses for learning portal
+export const courses = pgTable("courses", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  instructorId: integer("instructor_id").notNull().references(() => users.id),
+  thumbnail: text("thumbnail"),
+  level: text("level").default("beginner"), // beginner, intermediate, advanced
+  category: text("category"),
+  duration: integer("duration"), // in minutes
+  isPublished: boolean("is_published").default(false),
+  price: integer("price"), // in cents, null if free
+  stripePriceId: text("stripe_price_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Lessons within courses
+export const lessons = pgTable("lessons", {
+  id: serial("id").primaryKey(),
+  courseId: integer("course_id").notNull().references(() => courses.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  content: text("content"),
+  videoUrl: text("video_url"),
+  duration: integer("duration"), // in minutes
+  order: integer("order").notNull(),
+  isPublished: boolean("is_published").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Quizzes for lessons
+export const quizzes = pgTable("quizzes", {
+  id: serial("id").primaryKey(),
+  lessonId: integer("lesson_id").notNull().references(() => lessons.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  questions: jsonb("questions").notNull(), // Array of question objects
+  passingScore: integer("passing_score").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User enrollments in courses
+export const enrollments = pgTable("enrollments", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  courseId: integer("course_id").notNull().references(() => courses.id, { onDelete: "cascade" }),
+  enrolledAt: timestamp("enrolled_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+  progress: integer("progress").default(0), // percentage 0-100
+});
+
+// Job board listings
+export const jobs = pgTable("jobs", {
+  id: serial("id").primaryKey(),
+  postedById: integer("posted_by_id").notNull().references(() => users.id),
+  title: text("title").notNull(),
+  company: text("company").notNull(),
+  location: text("location").notNull(),
+  type: text("type").notNull(), // full-time, part-time, contract, etc.
+  description: text("description").notNull(),
+  requirements: jsonb("requirements"),
+  salary: jsonb("salary"), // { min, max, currency }
+  applicationUrl: text("application_url"),
+  contactEmail: text("contact_email"),
+  isActive: boolean("is_active").default(true),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Job applications
+export const jobApplications = pgTable("job_applications", {
+  id: serial("id").primaryKey(),
+  jobId: integer("job_id").notNull().references(() => jobs.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  resumeUrl: text("resume_url"),
+  coverLetter: text("cover_letter"),
+  status: text("status").default("submitted"), // submitted, reviewed, interviewing, accepted, rejected
+  appliedAt: timestamp("applied_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Marketplace items (agents, templates, themes)
+export const marketplaceItems = pgTable("marketplace_items", {
+  id: serial("id").primaryKey(),
+  sellerId: integer("seller_id").notNull().references(() => users.id),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  price: integer("price").notNull(), // in cents
+  type: text("type").notNull(), // agent, template, theme
+  category: text("category"),
+  thumbnail: text("thumbnail"),
+  downloadUrl: text("download_url"),
+  demoUrl: text("demo_url"),
+  published: boolean("published").default(false),
+  downloads: integer("downloads").default(0),
+  stripeProductId: text("stripe_product_id"),
+  stripePriceId: text("stripe_price_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Marketplace purchases
+export const marketplacePurchases = pgTable("marketplace_purchases", {
+  id: serial("id").primaryKey(),
+  itemId: integer("item_id").notNull().references(() => marketplaceItems.id),
+  buyerId: integer("buyer_id").notNull().references(() => users.id),
+  transactionId: text("transaction_id"), // Stripe payment intent ID
+  amount: integer("amount").notNull(), // in cents
+  purchasedAt: timestamp("purchased_at").defaultNow(),
+});
+
+// Calendar events
+export const calendarEvents = pgTable("calendar_events", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time").notNull(),
+  allDay: boolean("all_day").default(false),
+  location: text("location"),
+  videoMeetingUrl: text("video_meeting_url"),
+  color: text("color").default("#3788d8"),
+  reminderMinutes: integer("reminder_minutes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Types for accounts
+export const insertAccountSchema = createInsertSchema(accounts);
+export type Account = typeof accounts.$inferSelect;
+export type InsertAccount = z.infer<typeof insertAccountSchema>;
+
+// Types for sessions
+export const insertSessionSchema = createInsertSchema(sessions);
+export type Session = typeof sessions.$inferSelect;
+export type InsertSession = z.infer<typeof insertSessionSchema>;
+
+// Types for role permissions
+export const insertRolePermissionSchema = createInsertSchema(rolePermissions);
+export type RolePermission = typeof rolePermissions.$inferSelect;
+export type InsertRolePermission = z.infer<typeof insertRolePermissionSchema>;
+
+// Type exports for existing tables
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type Post = typeof posts.$inferSelect;

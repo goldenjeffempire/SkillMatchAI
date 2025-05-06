@@ -411,4 +411,268 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+import connectPg from "connect-pg-simple";
+import { pool, db } from "./db";
+
+const PostgresSessionStore = connectPg(session);
+
+// Add a database storage implementation that uses the actual database
+export class DatabaseStorage implements IStorage {
+  sessionStore: any;
+
+  constructor() {
+    this.sessionStore = new PostgresSessionStore({ 
+      pool, 
+      createTableIfMissing: true,
+      tableName: 'session' 
+    });
+  }
+
+  // User methods
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const [newUser] = await db.insert(users).values(user).returning();
+    return newUser;
+  }
+
+  async updateUser(id: number, userData: Partial<Omit<User, "id" | "password">>): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ ...userData, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
+  }
+
+  async updateStripeCustomerId(userId: number, stripeCustomerId: string): Promise<User> {
+    return this.updateUser(userId, { stripeCustomerId });
+  }
+
+  async updateStripeSubscriptionInfo(userId: number, subscriptionInfo: { stripeCustomerId: string, stripeSubscriptionId: string }): Promise<User> {
+    return this.updateUser(userId, subscriptionInfo);
+  }
+
+  // Posts methods
+  async createPost(post: { userId: number; content: string; mediaUrl?: string }): Promise<Post> {
+    const [newPost] = await db.insert(posts).values(post).returning();
+    return newPost;
+  }
+
+  async getPostById(id: number): Promise<Post | undefined> {
+    const [post] = await db.select().from(posts).where(eq(posts.id, id));
+    return post;
+  }
+
+  async getAllPosts(limit = 10, offset = 0): Promise<Post[]> {
+    return db.select()
+      .from(posts)
+      .orderBy(posts.createdAt)
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async getUserPosts(userId: number): Promise<Post[]> {
+    return db.select()
+      .from(posts)
+      .where(eq(posts.userId, userId))
+      .orderBy(posts.createdAt);
+  }
+
+  // Comments methods
+  async createComment(comment: { postId: number; userId: number; content: string }): Promise<Comment> {
+    const [newComment] = await db.insert(comments).values(comment).returning();
+    return newComment;
+  }
+
+  async getPostComments(postId: number): Promise<Comment[]> {
+    return db.select()
+      .from(comments)
+      .where(eq(comments.postId, postId))
+      .orderBy(comments.createdAt);
+  }
+
+  // Likes methods
+  async createLike(like: { postId: number; userId: number }): Promise<Like> {
+    const [newLike] = await db.insert(likes).values(like).returning();
+    return newLike;
+  }
+
+  async deleteLike(postId: number, userId: number): Promise<void> {
+    await db.delete(likes).where(
+      and(
+        eq(likes.postId, postId),
+        eq(likes.userId, userId)
+      )
+    );
+  }
+
+  async getPostLikes(postId: number): Promise<Like[]> {
+    return db.select()
+      .from(likes)
+      .where(eq(likes.postId, postId));
+  }
+
+  // Books methods
+  async getAllBooks(category?: string, limit = 10, offset = 0): Promise<Book[]> {
+    let query = db.select().from(books);
+    
+    if (category) {
+      query = query.where(eq(books.category, category));
+    }
+    
+    return query
+      .orderBy(books.createdAt)
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async getBookById(id: number): Promise<Book | undefined> {
+    const [book] = await db.select().from(books).where(eq(books.id, id));
+    return book;
+  }
+
+  // Follow methods
+  async followUser(followerId: number, followingId: number): Promise<Follow> {
+    const [follow] = await db.insert(follows)
+      .values({ followerId, followingId })
+      .returning();
+    
+    return follow;
+  }
+
+  async unfollowUser(followerId: number, followingId: number): Promise<void> {
+    await db.delete(follows).where(
+      and(
+        eq(follows.followerId, followerId),
+        eq(follows.followingId, followingId)
+      )
+    );
+  }
+
+  async getUserFollowers(userId: number): Promise<Follow[]> {
+    return db.select()
+      .from(follows)
+      .where(eq(follows.followingId, userId));
+  }
+
+  async getUserFollowing(userId: number): Promise<Follow[]> {
+    return db.select()
+      .from(follows)
+      .where(eq(follows.followerId, userId));
+  }
+
+  // AI Content methods
+  async createAiContent(content: InsertAiContent): Promise<AiContent> {
+    const [newContent] = await db.insert(aiContents).values(content).returning();
+    return newContent;
+  }
+
+  async getAiContentById(id: number): Promise<AiContent | undefined> {
+    const [content] = await db.select().from(aiContents).where(eq(aiContents.id, id));
+    return content;
+  }
+
+  async getUserAiContents(userId: number, type?: string): Promise<AiContent[]> {
+    let query = db.select().from(aiContents).where(eq(aiContents.userId, userId));
+    
+    if (type) {
+      query = query.where(eq(aiContents.type, type));
+    }
+    
+    return query.orderBy(aiContents.createdAt);
+  }
+
+  // Project methods
+  async createProject(project: InsertProject): Promise<Project> {
+    const [newProject] = await db.insert(projects).values(project).returning();
+    return newProject;
+  }
+
+  async getProjectById(id: number): Promise<Project | undefined> {
+    const [project] = await db.select().from(projects).where(eq(projects.id, id));
+    return project;
+  }
+
+  async getUserProjects(userId: number): Promise<Project[]> {
+    return db.select()
+      .from(projects)
+      .where(eq(projects.userId, userId))
+      .orderBy(projects.updatedAt);
+  }
+
+  async updateProject(id: number, project: Partial<Omit<Project, "id" | "userId" | "createdAt" | "updatedAt">>): Promise<Project> {
+    const [updatedProject] = await db
+      .update(projects)
+      .set({ ...project, updatedAt: new Date() })
+      .where(eq(projects.id, id))
+      .returning();
+    
+    return updatedProject;
+  }
+
+  async deleteProject(id: number): Promise<void> {
+    // Delete related components first
+    await db.delete(projectComponents).where(eq(projectComponents.projectId, id));
+    
+    // Delete the project
+    await db.delete(projects).where(eq(projects.id, id));
+  }
+
+  // Project Components methods
+  async createProjectComponent(component: InsertProjectComponent): Promise<ProjectComponent> {
+    const [newComponent] = await db.insert(projectComponents).values(component).returning();
+    return newComponent;
+  }
+
+  async getProjectComponents(projectId: number): Promise<ProjectComponent[]> {
+    return db.select()
+      .from(projectComponents)
+      .where(eq(projectComponents.projectId, projectId))
+      .orderBy(projectComponents.order);
+  }
+
+  async updateProjectComponent(id: number, component: Partial<Omit<ProjectComponent, "id" | "projectId" | "createdAt">>): Promise<ProjectComponent> {
+    const [updatedComponent] = await db
+      .update(projectComponents)
+      .set(component)
+      .where(eq(projectComponents.id, id))
+      .returning();
+    
+    return updatedComponent;
+  }
+
+  async deleteProjectComponent(id: number): Promise<void> {
+    await db.delete(projectComponents).where(eq(projectComponents.id, id));
+  }
+
+  // Subscription methods
+  async getAllSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+    return db.select().from(subscriptionPlans);
+  }
+
+  async getSubscriptionPlanById(id: number): Promise<SubscriptionPlan | undefined> {
+    const [plan] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, id));
+    return plan;
+  }
+
+  async getSubscriptionPlanByName(name: string): Promise<SubscriptionPlan | undefined> {
+    const [plan] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.name, name));
+    return plan;
+  }
+}
+
+export const storage = new DatabaseStorage();
