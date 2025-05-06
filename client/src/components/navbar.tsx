@@ -22,6 +22,7 @@ export function Navbar() {
     { href: "/#features", label: "Features" },
     { href: "/#ai-tools", label: "AI Tools" },
     { href: "/#library", label: "Library" },
+    { href: "/projects", label: "My Projects", requiresAuth: true },
     { href: "/branding", label: "Branding" },
     { href: "/subscription", label: "Pricing", requiresAuth: false }
   ];
@@ -37,13 +38,18 @@ export function Navbar() {
         
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-8">
-          {navLinks.map((link) => (
-            <Link key={link.href} href={link.href}>
-              <a className="text-gray-300 hover:text-white transition-colors">
-                {link.label}
-              </a>
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            // Don't show links that require auth if user is not logged in
+            if (link.requiresAuth && !user) return null;
+            
+            return (
+              <Link key={link.href} href={link.href}>
+                <a className="text-gray-300 hover:text-white transition-colors">
+                  {link.label}
+                </a>
+              </Link>
+            );
+          })}
         </nav>
         
         <div className="flex items-center gap-3">
@@ -100,16 +106,21 @@ export function Navbar() {
             className="md:hidden bg-background/95 backdrop-blur-md border-b border-primary/20"
           >
             <nav className="container mx-auto px-4 py-5 flex flex-col space-y-4">
-              {navLinks.map((link) => (
-                <Link key={link.href} href={link.href}>
-                  <a 
-                    className="text-gray-300 hover:text-white transition-colors py-2"
-                    onClick={closeMenu}
-                  >
-                    {link.label}
-                  </a>
-                </Link>
-              ))}
+              {navLinks.map((link) => {
+                // Don't show links that require auth if user is not logged in
+                if (link.requiresAuth && !user) return null;
+                
+                return (
+                  <Link key={link.href} href={link.href}>
+                    <a 
+                      className="text-gray-300 hover:text-white transition-colors py-2"
+                      onClick={closeMenu}
+                    >
+                      {link.label}
+                    </a>
+                  </Link>
+                );
+              })}
               
               {user ? (
                 <>

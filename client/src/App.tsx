@@ -12,6 +12,8 @@ import BrandingPage from "@/pages/branding-page";
 import CheckoutPage from "@/pages/checkout-page";
 import SubscriptionPage from "@/pages/subscription-page";
 import SuccessPage from "@/pages/success-page";
+import ProjectsPage from "@/pages/projects-page";
+import ProjectDetailPage from "@/pages/project-detail-page";
 import { ProtectedRoute } from "@/lib/protected-route";
 
 function Router() {
@@ -23,6 +25,8 @@ function Router() {
       <Route path="/subscription" component={SubscriptionPage} />
       <ProtectedRoute path="/checkout" component={CheckoutPage} />
       <ProtectedRoute path="/success" component={SuccessPage} />
+      <ProtectedRoute path="/projects" component={ProjectsPage} />
+      <ProtectedRoute path="/projects/:id" component={ProjectDetailPage} />
       <Route component={NotFound} />
     </Switch>
   );
