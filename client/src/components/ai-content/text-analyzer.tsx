@@ -48,7 +48,11 @@ export function TextAnalyzer({ initialText = "" }: TextAnalyzerProps) {
   const analyzeMutation = useMutation({
     mutationFn: async (data: { text: string; analysisType: string }) => {
       try {
-        const res = await apiRequest("POST", "/api/analyze-text", data);
+        // Use the new AI API endpoint for text analysis
+        const res = await apiRequest("POST", "/api/ai/analyze", {
+          text: data.text,
+          type: data.analysisType
+        });
         
         // Handle authentication errors gracefully
         if (res.status === 401) {
