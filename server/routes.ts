@@ -1344,6 +1344,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Guardian AI routes
+  app.post("/api/guardian/settings", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to update guardian settings" });
+      }
+      
+      const { contentFiltering, ageRestriction, safeSearch, timeLimit } = req.body;
+      
+      // Store guardian settings in database
+      const settings = await storage.updateGuardianSettings(req.user!.id, {
+        contentFiltering,
+        ageRestriction,
+        safeSearch,
+        timeLimit
+      });
+      
+      res.json(settings);
+    } catch (error) {
+      console.error("Error updating guardian settings:", error);
+      res.status(500).json({ message: "Failed to update guardian settings" });
+    }
+  });
+
+  app.get("/api/guardian/settings", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to view guardian settings" });
+      }
+      
+      const settings = await storage.getGuardianSettings(req.user!.id);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching guardian settings:", error);
+      res.status(500).json({ message: "Failed to fetch guardian settings" });
+    }
+  });
+
   app.delete("/api/users/:username/follow", async (req, res) => {
     try {
       if (!req.isAuthenticated()) {

@@ -33,7 +33,8 @@ import ProductsPage from "@/pages/products-page";
 import CustomersPage from "@/pages/customers-page";
 import ProfilePage from "@/pages/profile-page";
 import BooksPage from "@/pages/books-page";
-import EchoTeacherPage from "@/pages/echo-teacher-page"; // Added import for EchoTeacherPage
+import EchoTeacherPage from "@/pages/echo-teacher-page";
+import GuardianAIPage from "@/pages/guardian-ai-page";
 
 
 function Router() {
