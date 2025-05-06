@@ -57,18 +57,30 @@ export default function AIStudioPage() {
           </TabsList>
           
           <TabsContent value="generator" className="space-y-4">
-            <ContentGenerator 
-              onComplete={(contentId) => {
-                toast({
-                  title: "Content saved",
-                  description: "Your content has been saved to your library.",
-                });
-              }}
-            />
+            {user && (
+              <ContentGenerator 
+                onComplete={(contentId) => {
+                  toast({
+                    title: "Content saved",
+                    description: "Your content has been saved to your library.",
+                  });
+                }}
+              />
+            )}
+            {!user && (
+              <div className="p-6 border rounded-lg bg-card text-center">
+                <p>Please log in to generate AI content.</p>
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="library" className="space-y-4">
-            <ContentLibrary onSelectContent={handleSelectContent} />
+            {user && <ContentLibrary onSelectContent={handleSelectContent} />}
+            {!user && (
+              <div className="p-6 border rounded-lg bg-card text-center">
+                <p>Please log in to view your content library.</p>
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="analyzer" className="space-y-4">
