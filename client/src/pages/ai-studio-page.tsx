@@ -84,13 +84,25 @@ export default function AIStudioPage() {
           </TabsContent>
           
           <TabsContent value="analyzer" className="space-y-4">
-            <TextAnalyzer 
-              initialText={selectedContent ? selectedContent.result : ""} 
-            />
+            {user && (
+              <TextAnalyzer 
+                initialText={selectedContent ? selectedContent.result : ""} 
+              />
+            )}
+            {!user && (
+              <div className="p-6 border rounded-lg bg-card text-center">
+                <p>Please log in to use the text analyzer.</p>
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="view" className="space-y-4">
-            {selectedContent && (
+            {!user && (
+              <div className="p-6 border rounded-lg bg-card text-center">
+                <p>Please log in to view content details.</p>
+              </div>
+            )}
+            {user && selectedContent && (
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <h2 className="text-2xl font-bold">{selectedContent.title}</h2>
