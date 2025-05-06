@@ -184,22 +184,22 @@ export function MainLayout({ children }: MainLayoutProps) {
                 <ul className="space-y-2 text-sm">
                   <li>
                     <Link href="/dashboard">
-                      <a className="text-muted-foreground hover:text-foreground transition-colors">Dashboard</a>
+                      <span className="text-muted-foreground hover:text-foreground transition-colors">Dashboard</span>
                     </Link>
                   </li>
                   <li>
                     <Link href="/ai-studio">
-                      <a className="text-muted-foreground hover:text-foreground transition-colors">AI Studio</a>
+                      <span className="text-muted-foreground hover:text-foreground transition-colors">AI Studio</span>
                     </Link>
                   </li>
                   <li>
                     <Link href="/library">
-                      <a className="text-muted-foreground hover:text-foreground transition-colors">Library</a>
+                      <span className="text-muted-foreground hover:text-foreground transition-colors">Library</span>
                     </Link>
                   </li>
                   <li>
                     <Link href="/social">
-                      <a className="text-muted-foreground hover:text-foreground transition-colors">Social</a>
+                      <span className="text-muted-foreground hover:text-foreground transition-colors">Social</span>
                     </Link>
                   </li>
                 </ul>
@@ -209,23 +209,23 @@ export function MainLayout({ children }: MainLayoutProps) {
                 <h3 className="text-sm font-medium mb-2">Company</h3>
                 <ul className="space-y-2 text-sm">
                   <li>
-                    <Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors">
-                      About
+                    <Link href="/about">
+                      <span className="text-muted-foreground hover:text-foreground transition-colors">About</span>
                     </Link>
                   </li>
                   <li>
-                    <Link href="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
-                      Privacy
+                    <Link href="/privacy">
+                      <span className="text-muted-foreground hover:text-foreground transition-colors">Privacy</span>
                     </Link>
                   </li>
                   <li>
-                    <Link href="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
-                      Terms
+                    <Link href="/terms">
+                      <span className="text-muted-foreground hover:text-foreground transition-colors">Terms</span>
                     </Link>
                   </li>
                   <li>
-                    <Link href="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
-                      Contact
+                    <Link href="/contact">
+                      <span className="text-muted-foreground hover:text-foreground transition-colors">Contact</span>
                     </Link>
                   </li>
                 </ul>
