@@ -1,5 +1,6 @@
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link } from "wouter";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Search, Users, Mail, Phone } from "lucide-react";
