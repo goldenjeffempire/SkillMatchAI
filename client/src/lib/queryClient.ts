@@ -86,14 +86,10 @@ export const queryClient = new QueryClient({
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: Infinity,
-      retry: false,
-      // Add more safety measures
-      suspense: false,
-      useErrorBoundary: false,
+      retry: false
     },
     mutations: {
       retry: false,
-      useErrorBoundary: false,
     },
   },
 });

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -5,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { AuthProvider } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 import { ErrorBoundary } from "@/components/error-boundary";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
@@ -35,6 +37,35 @@ function Router() {
   );
 }
 
+// Global error handler component with access to toast context
+function GlobalErrorHandler() {
+  const { toast } = useToast();
+  
+  useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      event.preventDefault();
+      console.error('Unhandled promise rejection:', event.reason);
+      
+      // Show a toast notification to inform the user
+      toast({
+        title: "Application Error",
+        description: "Something went wrong. Please try again or refresh the page.",
+        variant: "destructive",
+      });
+    };
+    
+    // Add the event listener
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, [toast]);
+  
+  return null;
+}
+
 function App() {
   return (
     <ErrorBoundary>
@@ -43,6 +74,7 @@ function App() {
           <AuthProvider>
             <TooltipProvider>
               <Toaster />
+              <GlobalErrorHandler />
               <Router />
             </TooltipProvider>
           </AuthProvider>
