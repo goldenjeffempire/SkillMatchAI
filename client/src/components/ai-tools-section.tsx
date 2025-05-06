@@ -78,11 +78,11 @@ function AIToolCard({ tool, index, isActive, onClick }: {
         </motion.div>
 
         <div>
-          <motion.h4 
-            className={`text-xl font-semibold mb-2 transition-colors duration-200 ${isActive ? "text-primary" : "text-white"}`}
+          <h4 
+            className={`text-xl font-semibold mb-2 transition-colors duration-300 ${isActive ? "text-primary" : "text-white"}`}
           >
             {tool.title}
-          </motion.h4>
+          </h4>
 
           <p className="text-gray-300 text-sm mb-3">
             {tool.description}
