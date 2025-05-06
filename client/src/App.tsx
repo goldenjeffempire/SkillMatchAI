@@ -19,6 +19,9 @@ import SuccessPage from "@/pages/success-page";
 import ProjectsPage from "@/pages/projects-page";
 import ProjectDetailPage from "@/pages/project-detail-page";
 import AIStudioPage from "@/pages/ai-studio-page";
+import DashboardPage from "@/pages/dashboard-page";
+import SocialPage from "@/pages/social-page";
+import LibraryPage from "@/pages/library-page";
 import { ProtectedRoute } from "@/lib/protected-route";
 
 function Router() {
@@ -28,11 +31,17 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
       <Route path="/branding" component={BrandingPage} />
       <Route path="/subscription" component={SubscriptionPage} />
+      
+      {/* Protected Routes */}
+      <ProtectedRoute path="/dashboard" component={DashboardPage} />
+      <ProtectedRoute path="/social" component={SocialPage} />
+      <ProtectedRoute path="/library" component={LibraryPage} />
       <ProtectedRoute path="/checkout" component={CheckoutPage} />
       <ProtectedRoute path="/success" component={SuccessPage} />
       <ProtectedRoute path="/projects" component={ProjectsPage} />
       <ProtectedRoute path="/projects/:id" component={ProjectDetailPage} />
       <ProtectedRoute path="/ai-studio" component={AIStudioPage} />
+      
       <Route component={NotFound} />
     </Switch>
   );

@@ -90,11 +90,11 @@ function formatDate(dateString: string): string {
       year: now.getFullYear() !== date.getFullYear() ? 'numeric' : undefined
     });
   } else if (days > 0) {
-    return \`\${days}d ago\`;
+    return `${days}d ago`;
   } else if (hours > 0) {
-    return \`\${hours}h ago\`;
+    return `${hours}h ago`;
   } else if (minutes > 0) {
-    return \`\${minutes}m ago\`;
+    return `${minutes}m ago`;
   } else {
     return 'just now';
   }
