@@ -366,6 +366,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Routes
   // ========================================================================
   
+  // AI Content Library routes
+  app.get("/api/ai-contents", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to access your AI content" });
+      }
+      
+      const userId = req.user!.id;
+      const type = req.query.type as string | undefined;
+      
+      const contents = await storage.getUserAiContents(userId, type);
+      
+      res.json(contents);
+    } catch (error) {
+      console.error("Error fetching AI contents:", error);
+      res.status(500).json({ message: "Failed to fetch AI contents" });
+    }
+  });
+  
+  app.get("/api/ai-contents/:id", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to access AI content" });
+      }
+      
+      const contentId = parseInt(req.params.id);
+      
+      if (isNaN(contentId)) {
+        return res.status(400).json({ message: "Invalid content ID" });
+      }
+      
+      const content = await storage.getAiContentById(contentId);
+      
+      if (!content) {
+        return res.status(404).json({ message: "Content not found" });
+      }
+      
+      // Verify the user owns this content
+      if (content.userId !== req.user!.id) {
+        return res.status(403).json({ message: "You don't have permission to access this content" });
+      }
+      
+      res.json(content);
+    } catch (error) {
+      console.error("Error fetching AI content:", error);
+      res.status(500).json({ message: "Failed to fetch AI content" });
+    }
+  });
+  
   // AI Chatbot route - Updated to work with the new AI chatbot component
   app.post("/api/ai/chat", async (req, res) => {
     try {
