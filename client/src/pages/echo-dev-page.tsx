@@ -1,36 +1,53 @@
-
+import { useState } from "react";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
-import { Code2, Bug, Blocks } from "lucide-react";
-import { useState } from "react";
+import { Code2, Sparkles, Bug, FileCode2, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function EchoDevPage() {
   const [prompt, setPrompt] = useState("");
   const [language, setLanguage] = useState("javascript");
   const [type, setType] = useState("code");
-  const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleGenerate = async () => {
-    setGenerating(true);
+  const generateCode = async () => {
+    if (!prompt) {
+      toast({
+        title: "Input Required",
+        description: "Please enter a prompt to generate code",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      const res = await fetch('/api/dev/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/dev/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt, language, type })
       });
-      const data = await res.json();
+
+      if (!response.ok) {
+        throw new Error("Failed to generate code");
+      }
+
+      const data = await response.json();
       setResult(data.result);
     } catch (error) {
-      console.error(error);
+      toast({
+        title: "Error",
+        description: "Failed to generate code. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
-    setGenerating(false);
   };
 
   return (
@@ -39,29 +56,18 @@ export default function EchoDevPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold">EchoDevBot</h1>
-            <p className="text-muted-foreground">Code generation and development tools</p>
+            <p className="text-muted-foreground">AI-powered code generation and development assistance</p>
           </div>
         </div>
 
-        <Tabs defaultValue="code" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="code">
-              <Code2 className="w-4 h-4 mr-2" />
-              Code Generation
-            </TabsTrigger>
-            <TabsTrigger value="debug">
-              <Bug className="w-4 h-4 mr-2" />
-              Debug Helper
-            </TabsTrigger>
-            <TabsTrigger value="architecture">
-              <Blocks className="w-4 h-4 mr-2" />
-              Architecture Design
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="code">
-            <Card className="p-6">
-              <div className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Code Generation</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="block mb-2 text-sm font-medium">Programming Language</label>
                 <Select
                   value={language}
                   onValueChange={setLanguage}
@@ -73,85 +79,61 @@ export default function EchoDevPage() {
                     { label: "C++", value: "cpp" }
                   ]}
                 />
+              </div>
 
+              <div>
+                <label className="block mb-2 text-sm font-medium">Generation Type</label>
+                <Select
+                  value={type}
+                  onValueChange={setType}
+                  options={[
+                    { label: "Code Generation", value: "code" },
+                    { label: "Debug Assistance", value: "debug" },
+                    { label: "Code Review", value: "review" },
+                    { label: "Architecture Design", value: "architecture" }
+                  ]}
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 text-sm font-medium">Prompt</label>
                 <Textarea
-                  placeholder="Describe what you want to build..."
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  rows={4}
+                  placeholder="Describe what you want to build or the problem you need help with..."
+                  rows={5}
                 />
-
-                <Button onClick={handleGenerate} disabled={generating}>
-                  <Code2 className="mr-2 h-4 w-4" />
-                  Generate Code
-                </Button>
-
-                {result && (
-                  <div className="mt-6">
-                    <h3 className="text-lg font-medium mb-3">Generated Code</h3>
-                    <pre className="bg-secondary p-4 rounded-lg overflow-x-auto">
-                      <code>{result}</code>
-                    </pre>
-                  </div>
-                )}
               </div>
-            </Card>
-          </TabsContent>
 
-          <TabsContent value="debug">
-            <Card className="p-6">
-              <div className="space-y-4">
-                <Textarea
-                  placeholder="Paste your code here and describe the issue..."
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  rows={8}
-                />
-
-                <Button onClick={handleGenerate} disabled={generating}>
-                  <Bug className="mr-2 h-4 w-4" />
-                  Debug Code
-                </Button>
-
-                {result && (
-                  <div className="mt-6">
-                    <h3 className="text-lg font-medium mb-3">Debug Analysis</h3>
-                    <div className="bg-secondary p-4 rounded-lg whitespace-pre-wrap">
-                      {result}
-                    </div>
-                  </div>
+              <Button onClick={generateCode} disabled={isLoading} className="w-full">
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Generate
+                  </>
                 )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Result</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="relative min-h-[300px] rounded-md bg-muted p-4">
+                <pre className="whitespace-pre-wrap break-words">
+                  <code>{result || "Generated code will appear here..."}</code>
+                </pre>
               </div>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="architecture">
-            <Card className="p-6">
-              <div className="space-y-4">
-                <Textarea
-                  placeholder="Describe your system requirements..."
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  rows={6}
-                />
-
-                <Button onClick={handleGenerate} disabled={generating}>
-                  <Blocks className="mr-2 h-4 w-4" />
-                  Generate Architecture
-                </Button>
-
-                {result && (
-                  <div className="mt-6">
-                    <h3 className="text-lg font-medium mb-3">Architecture Design</h3>
-                    <div className="bg-secondary p-4 rounded-lg whitespace-pre-wrap">
-                      {result}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Card>
-          </TabsContent>
-        </Tabs>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </DashboardLayout>
   );
