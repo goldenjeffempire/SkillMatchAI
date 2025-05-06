@@ -14,6 +14,7 @@ import SubscriptionPage from "@/pages/subscription-page";
 import SuccessPage from "@/pages/success-page";
 import ProjectsPage from "@/pages/projects-page";
 import ProjectDetailPage from "@/pages/project-detail-page";
+import AIStudioPage from "@/pages/ai-studio-page";
 import { ProtectedRoute } from "@/lib/protected-route";
 
 function Router() {
