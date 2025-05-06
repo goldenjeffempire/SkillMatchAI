@@ -4,7 +4,6 @@ import {
   type AiContent, type InsertAiContent, type Project, type InsertProject, 
   type ProjectComponent, type InsertProjectComponent, type SubscriptionPlan, type InsertSubscriptionPlan
 } from "@shared/schema";
-import { db } from "./db";
 import { eq, and } from "drizzle-orm";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -123,18 +122,35 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentId++;
     const createdAt = new Date();
+    const updatedAt = new Date();
+    
+    // Create a properly typed user object with all required fields
     const user: User = { 
-      ...insertUser, 
-      id, 
-      createdAt,
-      avatar: null,
-      bio: null,
-      stripeCustomerId: null,
-      stripeSubscriptionId: null,
-      subscriptionTier: null,
+      id,
+      username: insertUser.username,
+      email: insertUser.email,
+      password: insertUser.password,
+      emailVerified: insertUser.emailVerified || false,
+      verificationToken: insertUser.verificationToken || null,
+      fullName: insertUser.fullName || null,
+      firstName: insertUser.firstName || null,
+      lastName: insertUser.lastName || null,
+      avatar: insertUser.avatar || null,
       role: insertUser.role || "user",
-      fullName: insertUser.fullName || null
+      bio: insertUser.bio || null,
+      onboardingCompleted: insertUser.onboardingCompleted || false,
+      onboardingStep: insertUser.onboardingStep || 1,
+      preferences: insertUser.preferences || {},
+      stripeCustomerId: insertUser.stripeCustomerId || null,
+      stripeSubscriptionId: insertUser.stripeSubscriptionId || null,
+      subscriptionTier: insertUser.subscriptionTier || "free",
+      resetPasswordToken: insertUser.resetPasswordToken || null,
+      resetPasswordExpires: insertUser.resetPasswordExpires || null,
+      lastLoginAt: insertUser.lastLoginAt || null,
+      createdAt,
+      updatedAt
     };
+    
     this.usersMap.set(id, user);
     return user;
   }
