@@ -1,4 +1,3 @@
-
 import { MainLayout } from "@/components/layouts/main-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -77,61 +76,52 @@ export default function ProductsPage() {
     </MainLayout>
   );
 }
+
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Plus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-const products = [
-  { id: 1, name: 'AI Writing Assistant', price: 29.99, status: 'Active' },
-  { id: 2, name: 'Content Generator Pro', price: 49.99, status: 'Active' },
-  { id: 3, name: 'Smart Analytics Tool', price: 39.99, status: 'Draft' },
-];
-
-export default function ProductsPage() {
+export default function ProductsPageDashboard() {
   return (
     <DashboardLayout>
       <div className="container py-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Products</h1>
-          <Button>Add Product</Button>
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Product
+          </Button>
         </div>
 
-        <div className="flex items-center space-x-2 mb-6">
-          <Input placeholder="Search products..." className="max-w-sm" />
-          <Button variant="outline">Search</Button>
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Search products..." className="pl-8" />
+          </div>
         </div>
 
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {products.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell className="font-medium">{product.name}</TableCell>
-                  <TableCell>${product.price}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      product.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {product.status}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm">Edit</Button>
-                    <Button variant="ghost" size="sm" className="text-red-600">Delete</Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader>
+                <CardTitle className="text-lg">Product {i + 1}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="h-40 rounded-md bg-muted" />
+                  <p className="text-sm text-muted-foreground">
+                    Product description goes here...
+                  </p>
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold">$99.99</span>
+                    <Button variant="outline" size="sm">View Details</Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
     </DashboardLayout>

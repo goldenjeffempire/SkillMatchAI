@@ -1,4 +1,3 @@
-
 import { MainLayout } from "@/components/layouts/main-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -85,74 +84,64 @@ export default function CustomersPage() {
     </MainLayout>
   );
 }
+
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-const customers = [
-  { id: 1, name: 'Alice Johnson', email: 'alice@example.com', status: 'Active', plan: 'Pro' },
-  { id: 2, name: 'Bob Smith', email: 'bob@example.com', status: 'Active', plan: 'Basic' },
-  { id: 3, name: 'Carol Williams', email: 'carol@example.com', status: 'Inactive', plan: 'Enterprise' },
-];
+export default function CustomersPage2() {
+  const customers = [
+    { name: "John Doe", email: "john@example.com", status: "Active", orders: 5 },
+    { name: "Jane Smith", email: "jane@example.com", status: "Active", orders: 3 },
+    { name: "Bob Wilson", email: "bob@example.com", status: "Inactive", orders: 1 },
+  ];
 
-export default function CustomersPage() {
   return (
     <DashboardLayout>
       <div className="container py-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Customers</h1>
-          <Button>Export Data</Button>
+        <h1 className="text-3xl font-bold mb-6">Customers</h1>
+
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Search customers..." className="pl-8" />
+          </div>
         </div>
 
-        <div className="flex items-center space-x-2 mb-6">
-          <Input placeholder="Search customers..." className="max-w-sm" />
-          <Button variant="outline">Search</Button>
-        </div>
-
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Customer</TableHead>
-                <TableHead>Plan</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {customers.map((customer) => (
-                <TableRow key={customer.id}>
-                  <TableCell>
-                    <div className="flex items-center space-x-3">
-                      <Avatar>
-                        <AvatarImage src={`https://avatar.vercel.sh/${customer.email}`} />
-                        <AvatarFallback>{customer.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{customer.name}</div>
-                        <div className="text-sm text-gray-500">{customer.email}</div>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{customer.plan}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      customer.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {customer.status}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm">View</Button>
-                    <Button variant="ghost" size="sm">Edit</Button>
-                  </TableCell>
+        <Card>
+          <CardHeader>
+            <CardTitle>Customer List</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Orders</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {customers.map((customer, i) => (
+                  <TableRow key={i}>
+                    <TableCell>{customer.name}</TableCell>
+                    <TableCell>{customer.email}</TableCell>
+                    <TableCell>{customer.status}</TableCell>
+                    <TableCell>{customer.orders}</TableCell>
+                    <TableCell>
+                      <Button variant="outline" size="sm">View Details</Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );
