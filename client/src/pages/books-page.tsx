@@ -3,6 +3,8 @@ import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { Book, Search } from "lucide-react";
 import { useState } from "react";
