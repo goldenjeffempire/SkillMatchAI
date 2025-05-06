@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { AIChatbot } from "@/components/ai-chatbot";
+import AiChatbot from "@/components/ai-chatbot";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -16,7 +16,7 @@ export function MainLayout({ children, showFooter = true }: MainLayoutProps) {
         {children}
       </main>
       {showFooter && <Footer />}
-      <AIChatbot />
+      <AiChatbot />
     </div>
   );
 }

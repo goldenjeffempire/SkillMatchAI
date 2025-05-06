@@ -362,7 +362,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // AI Chatbot route
+  // ========================================================================
+  // AI Routes
+  // ========================================================================
+  
+  // AI Chatbot route - Updated to work with the new AI chatbot component
+  app.post("/api/ai/chat", async (req, res) => {
+    try {
+      const { message, history = [], model = "gpt-4o", temperature = 0.7 } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ error: "Message is required" });
+      }
+      
+      // Format the message history for the OpenAI API
+      const messages = history.map(({ role, content }: { role: string; content: string }) => ({
+        role: role as "user" | "assistant" | "system",
+        content,
+      }));
+      
+      // Add the current message
+      messages.push({
+        role: "user",
+        content: message
+      });
+      
+      // Get userId if user is authenticated
+      const userId = req.isAuthenticated() ? req.user!.id : undefined;
+      
+      // Get user info for personalization if authenticated
+      let systemPrompt = "You are Echo, the helpful AI assistant for Echoverse platform. ";
+      systemPrompt += "Echoverse is a comprehensive SaaS platform with AI tools like EchoWriter, EchoBuilder, EchoSeller, EchoMarketer, EchoTeacher, and EchoDevBot. ";
+      systemPrompt += "Your goal is to help users understand and use these tools, provide assistance, and answer questions about Echoverse features. ";
+      systemPrompt += "Keep responses helpful, friendly, and concise.";
+      
+      if (req.isAuthenticated()) {
+        systemPrompt += ` The user's name is ${req.user!.username}.`;
+      }
+      
+      // Generate the response
+      const response = await generateChatResponse(messages, {
+        systemPrompt,
+        model,
+        temperature,
+        userId,
+      });
+      
+      res.json({ response });
+    } catch (error: any) {
+      console.error("Error generating chat response:", error);
+      res.status(500).json({ error: `Failed to generate response: ${error.message}` });
+    }
+  });
+
+  // Legacy chat endpoint for backward compatibility
   app.post("/api/chat", async (req, res) => {
     try {
       const { messages } = req.body;
@@ -387,7 +440,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: msg.text
       }));
       
-      const response = await generateChatResponse(formattedMessages, systemPrompt);
+      const response = await generateChatResponse(formattedMessages, {
+        systemPrompt
+      });
       
       res.json({ 
         text: response,
@@ -402,6 +457,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Content Generation route
+  app.post("/api/ai/generate", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to generate content" });
+      }
+      
+      const { 
+        prompt, 
+        type = "text", 
+        tone = "professional",
+        context = "",
+        temperature = 0.7,
+      } = req.body;
+      
+      if (!prompt) {
+        return res.status(400).json({ error: "Prompt is required" });
+      }
+      
+      const userId = req.user!.id;
+      
+      const { content, id } = await generateContent(prompt, {
+        type,
+        tone,
+        context,
+        temperature,
+        userId,
+      });
+      
+      res.json({ content, id });
+    } catch (error: any) {
+      console.error("Error generating content:", error);
+      res.status(500).json({ error: `Failed to generate content: ${error.message}` });
+    }
+  });
+
+  // Legacy content generation route for backward compatibility
   app.post("/api/generate-content", async (req, res) => {
     try {
       if (!req.isAuthenticated()) {
@@ -414,8 +505,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Prompt is required" });
       }
       
-      const content = await generateContent(prompt, context, { 
+      const { content } = await generateContent(prompt, { 
         type,
+        context,
         ...options
       });
       
@@ -423,10 +515,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (content) {
         const validatedData = insertAiContentSchema.safeParse({
           userId: req.user!.id,
-          title: options?.title || prompt.substring(0, 50),
+          type: type || "general",
           prompt,
-          result: content,
-          type: type || "general"
+          content,
         });
         
         if (!validatedData.success) {
@@ -444,53 +535,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // AI Content routes
-  app.get("/api/ai-contents", async (req, res) => {
+  // Text analysis endpoint
+  app.post("/api/ai/analyze", async (req, res) => {
     try {
       if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "You must be logged in to view your AI contents" });
+        return res.status(401).json({ message: "You must be logged in to analyze text" });
       }
       
-      const type = req.query.type as string | undefined;
-      const contents = await storage.getUserAiContents(req.user!.id, type);
-      res.json(contents);
-    } catch (error) {
-      console.error("Error fetching AI contents:", error);
-      res.status(500).json({ message: "Failed to fetch AI contents" });
+      const { text, analysisType = "general" } = req.body;
+      
+      if (!text) {
+        return res.status(400).json({ error: "Text is required" });
+      }
+      
+      const userId = req.user!.id;
+      
+      const analysis = await analyzeText(text, {
+        analysisType,
+        userId,
+      });
+      
+      res.json(analysis);
+    } catch (error: any) {
+      console.error("Error analyzing text:", error);
+      res.status(500).json({ error: `Failed to analyze text: ${error.message}` });
     }
   });
-  
-  app.get("/api/ai-contents/:id", async (req, res) => {
-    try {
-      if (!req.isAuthenticated()) {
-        return res.status(401).json({ message: "You must be logged in to view AI content" });
-      }
-      
-      const contentId = parseInt(req.params.id);
-      
-      if (isNaN(contentId)) {
-        return res.status(400).json({ message: "Invalid content ID" });
-      }
-      
-      const content = await storage.getAiContentById(contentId);
-      
-      if (!content) {
-        return res.status(404).json({ message: "Content not found" });
-      }
-      
-      // Ensure the user owns the content
-      if (content.userId !== req.user!.id) {
-        return res.status(403).json({ message: "You don't have permission to view this content" });
-      }
-      
-      res.json(content);
-    } catch (error) {
-      console.error("Error fetching AI content:", error);
-      res.status(500).json({ message: "Failed to fetch AI content" });
-    }
-  });
-  
-  // Text Analysis route
+
+  // Legacy text analysis route for backward compatibility
   app.post("/api/analyze-text", async (req, res) => {
     try {
       if (!req.isAuthenticated()) {
