@@ -127,3 +127,29 @@ describe('OpenAI Service', () => {
     });
   });
 });
+import { describe, it, expect, vi } from 'vitest';
+import { generateContent, analyzeText } from '../openai';
+
+vi.mock('openai', () => ({
+  default: vi.fn().mockImplementation(() => ({
+    chat: {
+      completions: {
+        create: vi.fn().mockResolvedValue({
+          choices: [{ message: { content: 'Test response' } }]
+        })
+      }
+    }
+  }))
+}));
+
+describe('OpenAI Service', () => {
+  it('generates content successfully', async () => {
+    const result = await generateContent('Test prompt');
+    expect(result).toBeDefined();
+  });
+
+  it('analyzes text successfully', async () => {
+    const result = await analyzeText('Test text');
+    expect(result).toBeDefined();
+  });
+});
