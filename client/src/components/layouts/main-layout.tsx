@@ -32,6 +32,7 @@ interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   const [location, setLocation] = useLocation();
   const { user, logoutMutation } = useAuth();
+  const avatarUrl = user?.avatar || null;
   
   const handleLogout = () => {
     logoutMutation.mutate();

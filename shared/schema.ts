@@ -16,7 +16,6 @@ export const users = pgTable("users", {
   firstName: text("first_name"),
   lastName: text("last_name"),
   avatar: text("avatar"),
-  avatarUrl: text("avatar_url"),
   role: text("role").notNull().default("user"),  // user, student, parent, developer, admin
   bio: text("bio"),
   onboardingCompleted: boolean("onboarding_completed").default(false),
