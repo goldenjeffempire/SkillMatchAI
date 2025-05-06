@@ -46,18 +46,29 @@ export function CTASection() {
           <p className="text-xl text-gray-300 mb-8">
             Start with a 14-day free trial and explore all Echoverse features with no limitations.
           </p>
-          <Link href="/auth">
-            <Button 
-              className="inline-flex items-center px-8 py-4 font-semibold bg-primary hover:bg-primary/90 text-white rounded-lg shadow-glow transition-all transform hover:scale-105"
-              size="lg"
-            >
-              Get Started Free
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </Button>
-          </Link>
-          <p className="text-sm text-gray-400 mt-4">No credit card required</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/auth">
+              <Button 
+                className="inline-flex items-center px-8 py-4 font-semibold bg-primary hover:bg-primary/90 text-white rounded-lg shadow-glow transition-all transform hover:scale-105"
+                size="lg"
+              >
+                Get Started Free
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Button>
+            </Link>
+            <Link href="/subscription">
+              <Button 
+                className="inline-flex items-center px-8 py-4 font-semibold border-2 border-primary bg-transparent hover:bg-primary/10 text-white rounded-lg transition-all"
+                size="lg"
+                variant="outline"
+              >
+                View Pricing
+              </Button>
+            </Link>
+          </div>
+          <p className="text-sm text-gray-400 mt-4">No credit card required for free trial</p>
         </motion.div>
         
         {/* Testimonials */}

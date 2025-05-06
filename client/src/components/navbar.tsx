@@ -22,7 +22,8 @@ export function Navbar() {
     { href: "/#features", label: "Features" },
     { href: "/#ai-tools", label: "AI Tools" },
     { href: "/#library", label: "Library" },
-    { href: "/branding", label: "Branding" }
+    { href: "/branding", label: "Branding" },
+    { href: "/subscription", label: "Pricing", requiresAuth: false }
   ];
   
   return (

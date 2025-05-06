@@ -104,7 +104,7 @@ export default function CheckoutPage() {
   }, [toast]);
 
   const appearance = {
-    theme: 'stripe',
+    theme: 'stripe' as const,
   };
   const options = {
     clientSecret,
