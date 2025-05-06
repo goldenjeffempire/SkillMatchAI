@@ -39,6 +39,8 @@ function Router() {
       <ProtectedRoute path="/social" component={SocialPage} />
       <ProtectedRoute path="/library" component={LibraryPage} />
       <ProtectedRoute path="/checkout" component={CheckoutPage} />
+      <ProtectedRoute path="/echo-builder" component={EchoBuilderPage} />
+      <ProtectedRoute path="/books" component={BooksPage} />
       <ProtectedRoute path="/success" component={SuccessPage} />
       <ProtectedRoute path="/projects" component={ProjectsPage} />
       <ProtectedRoute path="/projects/:id" component={ProjectDetailPage} />
