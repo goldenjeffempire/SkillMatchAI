@@ -1,45 +1,42 @@
-
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useState } from "react";
+import { Bell, Lock, User, Palette, Globe, Shield } from "lucide-react";
 
 export default function SettingsPage() {
-  const { toast } = useToast();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      toast({
-        title: "Settings Saved",
-        description: "Your settings have been updated successfully."
-      });
-    }, 1000);
+    // TODO: Implement settings save
+    setTimeout(() => setLoading(false), 1000);
   };
 
   return (
     <DashboardLayout>
-      <div className="container py-6 max-w-4xl">
-        <h1 className="text-3xl font-bold mb-6">Settings</h1>
+      <div className="container py-6 max-w-5xl">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+            <p className="text-muted-foreground">Manage your account and preferences</p>
+          </div>
+          <Button onClick={handleSave} loading={loading}>Save Changes</Button>
+        </div>
 
         <Tabs defaultValue="account" className="space-y-6">
-          <TabsList className="bg-muted">
+          <TabsList>
             <TabsTrigger value="account">Account</TabsTrigger>
+            <TabsTrigger value="preferences">Preferences</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
-            <TabsTrigger value="privacy">Privacy</TabsTrigger>
-            <TabsTrigger value="ai">AI Preferences</TabsTrigger>
-            <TabsTrigger value="appearance">Appearance</TabsTrigger>
+            <TabsTrigger value="security">Security</TabsTrigger>
             <TabsTrigger value="billing">Billing</TabsTrigger>
             <TabsTrigger value="api">API</TabsTrigger>
           </TabsList>
@@ -47,38 +44,80 @@ export default function SettingsPage() {
           <TabsContent value="account">
             <Card>
               <CardHeader>
-                <CardTitle>Account Settings</CardTitle>
-                <CardDescription>Manage your account information and preferences</CardDescription>
+                <CardTitle>Account Information</CardTitle>
+                <CardDescription>Update your account details</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
-                  <Input id="username" defaultValue={user?.username} />
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="fullName">Full Name</Label>
+                      <Input id="fullName" defaultValue={user?.fullName} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="username">Username</Label>
+                      <Input id="username" defaultValue={user?.username} />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" defaultValue={user?.email} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="role">Role</Label>
+                    <Select defaultValue={user?.role}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="student">Student</SelectItem>
+                        <SelectItem value="teacher">Teacher</SelectItem>
+                        <SelectItem value="developer">Developer</SelectItem>
+                        <SelectItem value="business">Business</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" defaultValue={user?.email} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="preferences">
+            <Card>
+              <CardHeader>
+                <CardTitle>Platform Preferences</CardTitle>
+                <CardDescription>Customize your experience</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Dark Mode</Label>
+                      <p className="text-sm text-muted-foreground">Switch between light and dark themes</p>
+                    </div>
+                    <Switch />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Compact View</Label>
+                      <p className="text-sm text-muted-foreground">Display more content in less space</p>
+                    </div>
+                    <Switch />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Language</Label>
+                    <Select defaultValue="en">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select language" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="en">English</SelectItem>
+                        <SelectItem value="es">Spanish</SelectItem>
+                        <SelectItem value="fr">French</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <Input id="fullName" defaultValue={user?.fullName} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
-                  <Select defaultValue={user?.role}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="student">Student</SelectItem>
-                      <SelectItem value="parent">Parent</SelectItem>
-                      <SelectItem value="teacher">Teacher</SelectItem>
-                      <SelectItem value="developer">Developer</SelectItem>
-                      <SelectItem value="business">Business</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button onClick={handleSave} loading={loading}>Save Changes</Button>
               </CardContent>
             </Card>
           </TabsContent>
@@ -86,153 +125,71 @@ export default function SettingsPage() {
           <TabsContent value="notifications">
             <Card>
               <CardHeader>
-                <CardTitle>Notification Preferences</CardTitle>
-                <CardDescription>Control how you receive notifications</CardDescription>
+                <CardTitle>Notification Settings</CardTitle>
+                <CardDescription>Choose what notifications you receive</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Email Notifications</Label>
-                    <p className="text-sm text-muted-foreground">Receive updates via email</p>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Email Notifications</Label>
+                      <p className="text-sm text-muted-foreground">Receive important updates via email</p>
+                    </div>
+                    <Switch defaultChecked />
                   </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Social Interactions</Label>
-                    <p className="text-sm text-muted-foreground">Likes, comments, and mentions</p>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Push Notifications</Label>
+                      <p className="text-sm text-muted-foreground">Get real-time alerts on your device</p>
+                    </div>
+                    <Switch defaultChecked />
                   </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Learning Updates</Label>
-                    <p className="text-sm text-muted-foreground">Course progress and achievements</p>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Marketing Communications</Label>
+                      <p className="text-sm text-muted-foreground">Receive product updates and offers</p>
+                    </div>
+                    <Switch />
                   </div>
-                  <Switch defaultChecked />
                 </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>AI Assistant Updates</Label>
-                    <p className="text-sm text-muted-foreground">Updates from AI tools and features</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <Button onClick={handleSave} loading={loading}>Save Changes</Button>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="privacy">
+          <TabsContent value="security">
             <Card>
               <CardHeader>
-                <CardTitle>Privacy Settings</CardTitle>
-                <CardDescription>Control your privacy and security preferences</CardDescription>
+                <CardTitle>Security Settings</CardTitle>
+                <CardDescription>Manage your account security</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Profile Visibility</Label>
-                    <p className="text-sm text-muted-foreground">Make your profile visible to others</p>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Two-Factor Authentication</Label>
+                      <p className="text-sm text-muted-foreground">Add an extra layer of security</p>
+                    </div>
+                    <Switch />
                   </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="space-y-2">
-                  <Label>Who Can Message You</Label>
-                  <Select defaultValue="everyone">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="everyone">Everyone</SelectItem>
-                      <SelectItem value="followers">Followers Only</SelectItem>
-                      <SelectItem value="none">No One</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Two-Factor Authentication</Label>
-                    <p className="text-sm text-muted-foreground">Enable 2FA for added security</p>
+                  <div className="space-y-2">
+                    <Label htmlFor="currentPassword">Current Password</Label>
+                    <Input id="currentPassword" type="password" />
                   </div>
-                  <Switch />
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">New Password</Label>
+                    <Input id="newPassword" type="password" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                    <Input id="confirmPassword" type="password" />
+                  </div>
+                  <Button variant="secondary" className="w-full">
+                    Change Password
+                  </Button>
                 </div>
-                <Button onClick={handleSave} loading={loading}>Save Changes</Button>
               </CardContent>
             </Card>
           </TabsContent>
-
-          <TabsContent value="ai">
-            <Card>
-              <CardHeader>
-                <CardTitle>AI Preferences</CardTitle>
-                <CardDescription>Customize your AI experience</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label>AI Model Preference</Label>
-                  <Select defaultValue="gpt4">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="gpt4">GPT-4 (Recommended)</SelectItem>
-                      <SelectItem value="gpt35">GPT-3.5</SelectItem>
-                      <SelectItem value="claude">Claude</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>AI Assistant Always Active</Label>
-                    <p className="text-sm text-muted-foreground">Keep AI assistant running</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Content Memory</Label>
-                    <p className="text-sm text-muted-foreground">Remember previous interactions</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <Button onClick={handleSave} loading={loading}>Save Changes</Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="appearance">
-            <Card>
-              <CardHeader>
-                <CardTitle>Appearance Settings</CardTitle>
-                <CardDescription>Customize your interface</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Dark Mode</Label>
-                    <p className="text-sm text-muted-foreground">Toggle dark/light theme</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="space-y-2">
-                  <Label>Color Theme</Label>
-                  <Select defaultValue="cosmic">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cosmic">Cosmic Purple</SelectItem>
-                      <SelectItem value="ocean">Ocean Blue</SelectItem>
-                      <SelectItem value="forest">Forest Green</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button onClick={handleSave} loading={loading}>Save Changes</Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
           <TabsContent value="billing">
             <Card>
               <CardHeader>
