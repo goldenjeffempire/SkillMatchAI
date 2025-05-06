@@ -49,7 +49,7 @@ export default function JobsPage() {
                   <Filter className="w-4 h-4" />
                   Filters
                 </h3>
-                
+
                 <div>
                   <label className="text-sm font-medium mb-2 block">Job Type</label>
                   <Select value={selectedType} onValueChange={setSelectedType}>
@@ -122,11 +122,11 @@ export default function JobsPage() {
                       </div>
                       <Badge variant="secondary">Full-time</Badge>
                     </div>
-                    
+
                     <p className="text-sm text-muted-foreground mb-4">
                       We are seeking an experienced software engineer to join our growing team...
                     </p>
-                    
+
                     <div className="flex items-center justify-between">
                         <div className="text-sm font-medium">$120k - $150k</div>
                         <div className="space-x-2">
