@@ -3,6 +3,7 @@ import { create } from "zustand";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "./use-toast";
+import { ReactNode } from "react";
 
 interface User {
   id: string;
@@ -97,4 +98,18 @@ export function useAuth() {
     logoutMutation,
     isAuthenticated: !!user,
   };
+}
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export function AuthProvider({ children }: AuthProviderProps) {
+  const { isLoading } = useAuth();
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  return <>{children}</>;
 }
