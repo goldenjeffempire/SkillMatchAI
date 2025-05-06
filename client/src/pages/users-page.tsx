@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { MainLayout } from "@/components/layouts/main-layout";
+import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -28,15 +27,10 @@ export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: users, isLoading } = useQuery<User[]>({
-    queryKey: ["/api/users", searchQuery],
+    queryKey: ["users", searchQuery],
     queryFn: async () => {
-      try {
-        const response = await apiRequest("GET", `/api/users?search=${searchQuery}`);
-        return response.json();
-      } catch (error) {
-        console.error("Error fetching users:", error);
-        return [];
-      }
+      const res = await apiRequest("GET", `/api/users?search=${searchQuery}`);
+      return res.json();
     }
   });
 
@@ -66,8 +60,8 @@ export default function UsersPage() {
   const filteredUsers = filterUsers(users);
 
   return (
-    <MainLayout>
-      <div className="container py-6 max-w-7xl">
+    <DashboardLayout>
+      <div className="container py-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold tracking-tight">Community Users</h1>
           <div className="relative w-64">
@@ -96,7 +90,7 @@ export default function UsersPage() {
                 </CardContent>
               </Card>
             ))
-          ) : filteredUsers.length === 0 ? (
+          ) : filteredUsers?.length === 0 ? (
             <div className="col-span-full text-center py-12">
               <UsersIcon className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">No users found</h3>
@@ -105,7 +99,7 @@ export default function UsersPage() {
               </p>
             </div>
           ) : (
-            filteredUsers.map((user) => {
+            filteredUsers?.map((user) => {
               const { icon: RoleIcon, color } = getRoleBadge(user.role);
               return (
                 <Card key={user.id}>
@@ -159,36 +153,6 @@ export default function UsersPage() {
             })
           )}
         </div>
-      </div>
-    </MainLayout>
-  );
-}
-import { DashboardLayout } from "@/components/layouts/dashboard-layout";
-import { DataTable } from "@/components/ui/table";
-import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-
-export default function UsersPage() {
-  const { data: users, isLoading } = useQuery({
-    queryKey: ["users"],
-    queryFn: async () => {
-      const res = await apiRequest("GET", "/api/users");
-      return res.json();
-    }
-  });
-
-  return (
-    <DashboardLayout>
-      <div className="container py-6">
-        <h1 className="text-3xl font-bold mb-6">Users</h1>
-        {isLoading ? (
-          <div>Loading...</div>
-        ) : (
-          <div className="rounded-md border">
-            {/* Table implementation will go here */}
-            <pre>{JSON.stringify(users, null, 2)}</pre>
-          </div>
-        )}
       </div>
     </DashboardLayout>
   );
