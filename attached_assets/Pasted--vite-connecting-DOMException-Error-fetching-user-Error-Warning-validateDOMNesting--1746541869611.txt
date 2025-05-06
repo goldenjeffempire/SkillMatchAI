@@ -1,0 +1,27 @@
+[vite] connecting...
+DOMException {}
+
+Error fetching user: 
+Error {}
+
+Warning: validateDOMNesting(...): <a> cannot appear as a descendant of &lt;a&gt;.
+    at a
+    at a
+    at https://ed8452cf-431c-4232-a41e-79d793378d71-00-1tq37uz90u3cy.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=073514f7:279:18
+    at nav
+    at div
+    at div
+    at header
+    at div
+    at MainLayout (https://ed8452cf-431c-4232-a41e-79d793378d71-00-1tq37uz90u3cy.riker.replit.dev/src/components/layouts/main-layout.tsx:42:30)
+    at HomePage (https://ed8452cf-431c-4232-a41e-79d793378d71-00-1tq37uz90u3cy.riker.replit.dev/src/pages/home-page.tsx:28:22)
+    at Route (https://ed8452cf-431c-4232-a41e-79d793378d71-00-1tq37uz90u3cy.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=073514f7:265:16)
+    at Switch (https://ed8452cf-431c-4232-a41e-79d793378d71-00-1tq37uz90u3cy.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=073514f7:321:17)
+    at Router (https://ed8452cf-431c-4232-a41e-79d793378d71-00-1tq37uz90u3cy.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=073514f7:233:17)
+    at Provider (https://ed8452cf-431c-4232-a41e-79d793378d71-00-1tq37uz90u3cy.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=073514f7:38:15)
+    at TooltipProvider (https://ed8452cf-431c-4232-a41e-79d793378d71-00-1tq37uz90u3cy.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=073514f7:62:5)
+    at AuthProvider (https://ed8452cf-431c-4232-a41e-79d793378d71-00-1tq37uz90u3cy.riker.replit.dev/src/hooks/use-auth.tsx:101:32)
+    at ErrorBoundary (https://ed8452cf-431c-4232-a41e-79d793378d71-00-1tq37uz90u3cy.riker.replit.dev/src/components/error-boundary.tsx:8:5)
+    at ThemeProvider (https://ed8452cf-431c-4232-a41e-79d793378d71-00-1tq37uz90u3cy.riker.replit.dev/src/components/ui/theme-provider.tsx:25:3)
+    at QueryClientProvider (https://ed8452cf-431c-4232-a41e-79d793378d71-00-1tq37uz90u3cy.riker.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=073514f7:2805:3)
+    at App
