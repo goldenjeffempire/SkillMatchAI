@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { Switch, Route } from "wouter";
+import { useEffect, useState } from "react";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/ui/theme-provider";
 import { AuthProvider } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { AIChatbot } from "@/components/ai-chatbot";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
@@ -66,6 +67,21 @@ function GlobalErrorHandler() {
   return null;
 }
 
+// AI Chatbot wrapper that conditionally shows the chatbot based on the current route
+function AIChatbotWrapper() {
+  const [location] = useLocation();
+  
+  // Don't show chatbot on auth page
+  const hideChatbotOnRoutes = ["/auth"];
+  const shouldHideChatbot = hideChatbotOnRoutes.some(route => location === route);
+  
+  if (shouldHideChatbot) {
+    return null;
+  }
+  
+  return <AIChatbot />;
+}
+
 function App() {
   return (
     <ErrorBoundary>
@@ -76,6 +92,7 @@ function App() {
               <Toaster />
               <GlobalErrorHandler />
               <Router />
+              <AIChatbotWrapper />
             </TooltipProvider>
           </AuthProvider>
         </ThemeProvider>
