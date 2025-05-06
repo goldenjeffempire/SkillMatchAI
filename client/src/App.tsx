@@ -23,8 +23,16 @@ import DashboardPage from "@/pages/dashboard-page";
 import SocialPage from "@/pages/social-page";
 import LibraryPage from "@/pages/library-page";
 import { ProtectedRoute } from "@/lib/protected-route";
-import UsersPage from "./pages/users-page";
-import EchoWriterPage from "@/pages/echo-writer-page"; // Added import for EchoWriterPage
+import UsersPage from "@/pages/users-page";
+import EchoWriterPage from "@/pages/echo-writer-page";
+import EchoBuilderPage from "@/pages/echo-builder-page";
+import EchoMarketerPage from "@/pages/echo-marketer-page";
+import EchoDevPage from "@/pages/echo-dev-page";
+import SettingsPage from "@/pages/settings-page";
+import ProductsPage from "@/pages/products-page";
+import CustomersPage from "@/pages/customers-page";
+import ProfilePage from "@/pages/profile-page";
+import BooksPage from "@/pages/books-page"; // Added import for EchoWriterPage
 
 
 function Router() {
@@ -43,6 +51,7 @@ function Router() {
       <ProtectedRoute path="/echo-builder" component={EchoBuilderPage} />
       <ProtectedRoute path="/echo-writer" component={EchoWriterPage} />
       <ProtectedRoute path="/echo-marketer" component={EchoMarketerPage} />
+      <ProtectedRoute path="/echo-dev" component={EchoDevPage} />
       <ProtectedRoute path="/books" component={BooksPage} />
       <ProtectedRoute path="/success" component={SuccessPage} />
       <ProtectedRoute path="/projects" component={ProjectsPage} />

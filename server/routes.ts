@@ -634,6 +634,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // AI Tools routes
   // EchoBuilder Projects routes
+  // EchoDevBot routes
+  app.post("/api/dev/generate", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to use EchoDevBot" });
+      }
+
+      const { prompt, language, type } = req.body;
+      
+      if (!prompt || !type) {
+        return res.status(400).json({ message: "Prompt and type are required" });
+      }
+
+      const systemPrompt = `You are an expert ${language || ''} developer. ${
+        type === 'code' ? 'Write code to solve this problem.' :
+        type === 'debug' ? 'Help debug this code.' :
+        'Design an architecture for this system.'
+      }`;
+
+      const response = await generateDevResponse(prompt, systemPrompt);
+      res.json({ result: response });
+    } catch (error) {
+      console.error("Error generating dev response:", error);
+      res.status(500).json({ message: "Failed to generate response" });
+    }
+  });
+
+  app.post("/api/dev/plugins", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "You must be logged in to create plugins" });
+      }
+
+      const { name, description, code } = req.body;
+      
+      if (!name || !code) {
+        return res.status(400).json({ message: "Name and code are required" });
+      }
+
+      // Store plugin in database
+      const plugin = await storage.createPlugin({
+        name,
+        description,
+        code,
+        userId: req.user!.id
+      });
+
+      res.json(plugin);
+    } catch (error) {
+      console.error("Error creating plugin:", error);
+      res.status(500).json({ message: "Failed to create plugin" });
+    }
+  });
+
   app.post("/api/projects", async (req, res) => {
     try {
       if (!req.isAuthenticated()) {
