@@ -4,7 +4,7 @@ import { FeaturesSection } from "@/components/features-section";
 import { AIToolsSection } from "@/components/ai-tools-section";
 import { LibraryPreviewSection } from "@/components/library-preview-section";
 import { CTASection } from "@/components/cta-section";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
 export default function HomePage() {
