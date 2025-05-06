@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsContent as TabsBody, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
