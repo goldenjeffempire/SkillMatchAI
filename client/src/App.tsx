@@ -32,7 +32,8 @@ import SettingsPage from "@/pages/settings-page";
 import ProductsPage from "@/pages/products-page";
 import CustomersPage from "@/pages/customers-page";
 import ProfilePage from "@/pages/profile-page";
-import BooksPage from "@/pages/books-page"; // Added import for EchoWriterPage
+import BooksPage from "@/pages/books-page";
+import EchoTeacherPage from "@/pages/echo-teacher-page"; // Added import for EchoTeacherPage
 
 
 function Router() {
@@ -51,7 +52,7 @@ function Router() {
       <ProtectedRoute path="/echo-builder" component={EchoBuilderPage} />
       <ProtectedRoute path="/echo-writer" component={EchoWriterPage} />
       <ProtectedRoute path="/echo-marketer" component={EchoMarketerPage} />
-      <ProtectedRoute path="/echo-dev" component={EchoDevPage} />
+      <ProtectedRoute path="/echo-teacher" component={EchoTeacherPage} />
       <ProtectedRoute path="/books" component={BooksPage} />
       <ProtectedRoute path="/success" component={SuccessPage} />
       <ProtectedRoute path="/projects" component={ProjectsPage} />
