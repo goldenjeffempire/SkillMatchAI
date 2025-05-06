@@ -33,11 +33,11 @@ export function MainLayout({ children }: MainLayoutProps) {
   const [location, setLocation] = useLocation();
   const { user, logoutMutation } = useAuth();
   const avatarUrl = user?.avatar || null;
-  
+
   const handleLogout = () => {
     logoutMutation.mutate();
   };
-  
+
   const getInitials = (name?: string): string => {
     if (!name) return "U";
     return name
@@ -47,7 +47,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       .toUpperCase()
       .substring(0, 2);
   };
-  
+
   const mainMenuItems = [
     { label: "Dashboard", href: "/dashboard" },
     { label: "Social", href: "/social" },
@@ -63,13 +63,11 @@ export function MainLayout({ children }: MainLayoutProps) {
         <div className="container flex h-16 items-center justify-between px-4 md:px-6">
           {/* Logo and Nav */}
           <div className="flex items-center gap-6 md:gap-8 lg:gap-10">
-            <Link href="/">
-              <a className="flex items-center space-x-2">
-                <Logo variant="icon" className="h-8 w-8" />
-                <span className="font-semibold text-lg hidden md:inline">Echoverse</span>
-              </a>
+            <Link href="/" className="flex items-center space-x-2">
+              <Logo variant="icon" className="h-8 w-8" />
+              <span className="font-semibold text-lg hidden md:inline">Echoverse</span>
             </Link>
-            
+
             <nav className="hidden md:flex items-center gap-6">
               {mainMenuItems.map((item, index) => (
                 <Link key={index} href={item.href}>
@@ -87,7 +85,7 @@ export function MainLayout({ children }: MainLayoutProps) {
               ))}
             </nav>
           </div>
-          
+
           {/* Search and User Actions */}
           <div className="flex items-center gap-2">
             <div className="hidden md:flex relative">
@@ -98,14 +96,14 @@ export function MainLayout({ children }: MainLayoutProps) {
                 className="w-full h-9 rounded-md border border-border bg-background pl-8 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
-            
+
             <Button variant="ghost" size="icon" className="relative">
               <Bell size={20} />
               <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
             </Button>
-            
+
             <ModeToggle />
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
@@ -149,7 +147,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            
+
             <Button
               variant="outline"
               size="icon"
@@ -165,7 +163,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       <main className="flex-1">
         {children}
       </main>
-      
+
       {/* Footer */}
       <footer className="border-t border-border bg-card py-6">
         <div className="container px-4 md:px-6">
@@ -179,7 +177,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                 Empowering you with integrated AI capabilities, social features, and learning tools.
               </p>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <h3 className="text-sm font-medium mb-2">Platform</h3>
@@ -206,7 +204,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                   </li>
                 </ul>
               </div>
-              
+
               <div>
                 <h3 className="text-sm font-medium mb-2">Company</h3>
                 <ul className="space-y-2 text-sm">
@@ -233,7 +231,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                 </ul>
               </div>
             </div>
-            
+
             <div>
               <h3 className="text-sm font-medium mb-2">Subscribe</h3>
               <p className="text-sm text-muted-foreground mb-4">
@@ -249,13 +247,13 @@ export function MainLayout({ children }: MainLayoutProps) {
               </div>
             </div>
           </div>
-          
+
           <div className="mt-8 border-t border-border pt-6 text-center text-sm text-muted-foreground">
             © {new Date().getFullYear()} Echoverse. All rights reserved.
           </div>
         </div>
       </footer>
-      
+
       {/* Toast notifications */}
       <Toaster />
     </div>

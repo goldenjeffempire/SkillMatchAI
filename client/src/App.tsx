@@ -90,7 +90,8 @@ export default function App() {
     <StrictMode>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-          <AuthProvider>
+          <ErrorBoundary>
+            <AuthProvider>
             <TooltipProvider>
               <Router>
                 <Switch>
@@ -198,6 +199,7 @@ export default function App() {
               <AIChatbotWrapper />
             </TooltipProvider>
           </AuthProvider>
+          </ErrorBoundary>
         </ThemeProvider>
       </QueryClientProvider>
     </StrictMode>
