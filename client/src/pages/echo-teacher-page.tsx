@@ -1,39 +1,54 @@
 
+import { useState } from "react";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
-import { GraduationCap, BookOpen, BrainCircuit, ClipboardCheck } from "lucide-react";
-import { useState } from "react";
+import { BookOpen, GraduationCap, Sparkles, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function EchoTeacherPage() {
   const [prompt, setPrompt] = useState("");
-  const [contentType, setContentType] = useState("lesson");
+  const [type, setType] = useState("lesson");
   const [subject, setSubject] = useState("");
-  const [generating, setGenerating] = useState(false);
+  const [result, setResult] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleGenerate = async () => {
-    setGenerating(true);
-    try {
-      const res = await fetch('/api/ai/generate-educational', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          prompt,
-          type: contentType,
-          subject,
-        })
+  const generateContent = async () => {
+    if (!prompt) {
+      toast({
+        title: "Input Required",
+        description: "Please enter a prompt to generate educational content",
+        variant: "destructive"
       });
-      const data = await res.json();
-      // Handle response
-    } catch (error) {
-      console.error(error);
+      return;
     }
-    setGenerating(false);
+
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/ai/generate-educational", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, type, subject })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate content");
+      }
+
+      const data = await response.json();
+      setResult(data.content);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate educational content. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -42,33 +57,32 @@ export default function EchoTeacherPage() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold">EchoTeacher</h1>
-            <p className="text-muted-foreground">Create engaging lessons and quizzes with AI</p>
+            <p className="text-muted-foreground">AI-powered educational content generation</p>
           </div>
         </div>
 
-        <Tabs defaultValue="lesson" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="lesson">
-              <BookOpen className="w-4 h-4 mr-2" />
-              Lesson Plans
-            </TabsTrigger>
-            <TabsTrigger value="quiz">
-              <ClipboardCheck className="w-4 h-4 mr-2" />
-              Quiz Generator
-            </TabsTrigger>
-            <TabsTrigger value="interactive">
-              <BrainCircuit className="w-4 h-4 mr-2" />
-              Interactive Content
-            </TabsTrigger>
-            <TabsTrigger value="curriculum">
-              <GraduationCap className="w-4 h-4 mr-2" />
-              Curriculum Design
-            </TabsTrigger>
-          </TabsList>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Generate Educational Content</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="block mb-2 text-sm font-medium">Content Type</label>
+                <Select
+                  value={type}
+                  onValueChange={setType}
+                  options={[
+                    { label: "Lesson Plan", value: "lesson" },
+                    { label: "Quiz", value: "quiz" },
+                    { label: "Interactive Activity", value: "interactive" },
+                    { label: "Curriculum", value: "curriculum" }
+                  ]}
+                />
+              </div>
 
-          <TabsContent value="lesson">
-            <Card className="p-6">
-              <div className="space-y-4">
+              <div>
+                <label className="block mb-2 text-sm font-medium">Subject Area</label>
                 <Select
                   value={subject}
                   onValueChange={setSubject}
@@ -76,73 +90,51 @@ export default function EchoTeacherPage() {
                     { label: "Mathematics", value: "math" },
                     { label: "Science", value: "science" },
                     { label: "Language Arts", value: "language" },
-                    { label: "History", value: "history" },
+                    { label: "Social Studies", value: "social" },
                     { label: "Computer Science", value: "cs" }
                   ]}
                 />
+              </div>
 
+              <div>
+                <label className="block mb-2 text-sm font-medium">Description</label>
                 <Textarea
-                  placeholder="Describe the lesson you want to create..."
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  rows={4}
+                  placeholder="Describe the educational content you want to create..."
+                  rows={5}
                 />
-
-                <Button onClick={handleGenerate} disabled={generating}>
-                  <BookOpen className="mr-2 h-4 w-4" />
-                  Generate Lesson Plan 
-                </Button>
               </div>
-            </Card>
-          </TabsContent>
 
-          <TabsContent value="quiz">
-            <Card className="p-6">
-              <div className="space-y-4">
-                <Select
-                  value={subject}
-                  onValueChange={setSubject}
-                  options={[
-                    { label: "Multiple Choice", value: "mc" },
-                    { label: "True/False", value: "tf" },
-                    { label: "Short Answer", value: "sa" },
-                    { label: "Essay", value: "essay" }
-                  ]}
-                />
+              <Button onClick={generateContent} disabled={isLoading} className="w-full">
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <GraduationCap className="mr-2 h-4 w-4" />
+                    Generate Content
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
 
-                <Textarea
-                  placeholder="What topic would you like to create a quiz for?"
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  rows={4}
-                />
-
-                <Button onClick={handleGenerate} disabled={generating}>
-                  <ClipboardCheck className="mr-2 h-4 w-4" />
-                  Generate Quiz
-                </Button>
+          <Card>
+            <CardHeader>
+              <CardTitle>Generated Content</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="relative min-h-[300px] rounded-md bg-muted p-4">
+                <pre className="whitespace-pre-wrap break-words">
+                  <code>{result || "Generated educational content will appear here..."}</code>
+                </pre>
               </div>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="interactive">
-            <Card className="p-6">
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Interactive Learning Materials</h3>
-                {/* Interactive content tools */}
-              </div>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="curriculum">
-            <Card className="p-6">
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Curriculum Design</h3>
-                {/* Curriculum planning tools */}
-              </div>
-            </Card>
-          </TabsContent>
-        </Tabs>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </DashboardLayout>
   );
