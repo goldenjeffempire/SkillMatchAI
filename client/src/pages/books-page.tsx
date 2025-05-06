@@ -18,6 +18,9 @@ export default function BooksPage() {
     language: "",
     format: "" as "ebook" | "audio" | "pdf" | "",
     difficulty: "" as "beginner" | "intermediate" | "advanced" | "",
+    progress: "" as "not-started" | "in-progress" | "completed" | "",
+    favorite: false,
+    hasHighlights: false,
   });
 
   const filterOptions = {
@@ -48,18 +51,55 @@ export default function BooksPage() {
             className="max-w-sm"
             icon={<Search className="h-4 w-4" />}
           />
-          <Select
-            value={filters.category}
-            onValueChange={(value) => setFilters(f => ({ ...f, category: value }))}
-            options={[
-              { label: "All Categories", value: "" },
-              { label: "Growth", value: "growth" },
-              { label: "Success", value: "success" },
-              { label: "Parenting", value: "parenting" },
-              { label: "Kids", value: "kids" }
-            ]}
-          />
-          {/* Add more filters */}
+          <div className="flex gap-4 flex-wrap">
+            <Select
+              value={filters.category}
+              onValueChange={(value) => setFilters(f => ({ ...f, category: value }))}
+              options={[
+                { label: "All Categories", value: "" },
+                { label: "Growth", value: "growth" },
+                { label: "Success", value: "success" },
+                { label: "Parenting", value: "parenting" },
+                { label: "Kids", value: "kids" }
+              ]}
+            />
+            <Select
+              value={filters.progress}
+              onValueChange={(value) => setFilters(f => ({ ...f, progress: value as typeof f.progress }))}
+              options={[
+                { label: "All Progress", value: "" },
+                { label: "Not Started", value: "not-started" },
+                { label: "In Progress", value: "in-progress" },
+                { label: "Completed", value: "completed" }
+              ]}
+            />
+            <Select
+              value={filters.readingTime}
+              onValueChange={(value) => setFilters(f => ({ ...f, readingTime: value as typeof f.readingTime }))}
+              options={[
+                { label: "Any Length", value: "" },
+                { label: "Short (<30 min)", value: "short" },
+                { label: "Medium (30-60 min)", value: "medium" },
+                { label: "Long (>60 min)", value: "long" }
+              ]}
+            />
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={filters.favorite}
+                onCheckedChange={(checked) => setFilters(f => ({ ...f, favorite: checked }))}
+                id="favorite-filter"
+              />
+              <Label htmlFor="favorite-filter">Favorites</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={filters.hasHighlights}
+                onCheckedChange={(checked) => setFilters(f => ({ ...f, hasHighlights: checked }))}
+                id="highlights-filter"
+              />
+              <Label htmlFor="highlights-filter">With Highlights</Label>
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
