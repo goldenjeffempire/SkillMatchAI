@@ -1,5 +1,7 @@
+// Use PostgreSQL as the database provider
 generator client {
   provider = "prisma-client-js"
+  output   = "./node_modules/@prisma/client"
 }
 
 datasource db {
@@ -8,108 +10,135 @@ datasource db {
 }
 
 model User {
-  id               String        @id @default(uuid())
-  username         String        @unique
-  email            String        @unique
-  password         String
-  fullName         String?
-  bio              String?
-  location         String?
-  avatarUrl        String?
-  role             UserRole      @default(USER)
-  skills           Skill[]       @relation("UserSkills")
-  applications     Application[]
-  experiences      Experience[]
-  educations       Education[]
-  messagesSent     Message[]     @relation("SentMessages")
-  messagesReceived Message[]     @relation("ReceivedMessages")
-  posts            Post[]
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-}
+  id                   Int                  @id @default(autoincrement())
+  username             String               @unique
+  email                String               @unique
+  password             String
+  emailVerified        Boolean              @default(false)
+  verificationToken    String?              @unique
+  fullName             String?
+  firstName            String?
+  lastName             String?
+  avatar               String?
+  role                 String               @default("user")
+  bio                  String?
+  onboardingCompleted  Boolean              @default(false)
+  onboardingStep       Int                  @default(1)
+  preferences          Json                 @default("{}")
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  subscriptionTier     String               @default("free")
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  lastLoginAt          DateTime?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @default(now()) @updatedAt
 
-enum UserRole {
-  USER
-  ADMIN
-  COMPANY
-}
-
-model Company {
-  id          String   @id @default(cuid()) // Unique ID
-  name        String   @unique              // Make `name` unique
-  description String
-  website     String?
-  jobs        Job[]    // Related jobs
-}
-
-model Job {
-  id          String   @id @default(cuid())  // Unique ID
-  title       String
-  description String
-  location    String
-  skills      Skill[]  // Related skills
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id])
-}
-
-model Skill {
-  id   String @id @default(cuid()) // Unique ID
-  name String
-}
-
-model Application {
-  id        String    @id @default(uuid())
-  user      User      @relation(fields: [userId], references: [id])
-  userId    String
-  job       Job       @relation(fields: [jobId], references: [id])
-  jobId     String
-  status    AppStatus @default(PENDING)
-  createdAt DateTime  @default(now())
-}
-
-enum AppStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-}
-
-model Experience {
-  id          String    @id @default(uuid())
-  user        User      @relation(fields: [userId], references: [id])
-  userId      String
-  title       String
-  company     String
-  startDate   DateTime
-  endDate     DateTime?
-  description String?
-}
-
-model Education {
-  id          String    @id @default(uuid())
-  user        User      @relation(fields: [userId], references: [id])
-  userId      String
-  institution String
-  degree      String
-  field       String
-  startDate   DateTime
-  endDate     DateTime?
-  description String?
-}
-
-model Message {
-  id         String   @id @default(uuid())
-  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
-  senderId   String
-  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
-  receiverId String
-  content    String
-  sentAt     DateTime @default(now())
+  posts                Post[]
+  comments             Comment[]
+  likes                Like[]
+  follows              Follow[]             @relation("UserFollows")
+  followers            Follow[]             @relation("UserFollowers")
+  aiContents           AiContent[]
+  projects             Project[]
 }
 
 model Post {
-  id        String   @id @default(uuid())
+  id          Int        @id @default(autoincrement())
+  userId      Int
+  content     String
+  mediaUrl    String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  user        User       @relation(fields: [userId], references: [id])
+  comments    Comment[]
+  likes       Like[]
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  userId    Int
   content   String
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String
   createdAt DateTime @default(now())
+
+  post      Post     @relation(fields: [postId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Like {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  userId    Int
+  createdAt DateTime @default(now())
+
+  post      Post     @relation(fields: [postId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Book {
+  id        Int      @id @default(autoincrement())
+  title     String
+  author    String
+  category  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Follow {
+  id           Int      @id @default(autoincrement())
+  followerId   Int
+  followingId  Int
+  createdAt    DateTime @default(now())
+
+  follower     User     @relation("UserFollows", fields: [followerId], references: [id])
+  following    User     @relation("UserFollowers", fields: [followingId], references: [id])
+}
+
+model AiContent {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  content   String
+  type      String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Project {
+  id          Int        @id @default(autoincrement())
+  userId      Int
+  title       String
+  description String?
+  status      String     @default("draft")
+  settings    Json       @default("{}")
+  published   Boolean    @default(false)
+  publishedUrl String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  user        User       @relation(fields: [userId], references: [id])
+  components  ProjectComponent[]
+}
+
+model ProjectComponent {
+  id          Int        @id @default(autoincrement())
+  projectId   Int
+  type        String
+  content     String
+  order       Int
+  createdAt   DateTime   @default(now())
+
+  project     Project    @relation(fields: [projectId], references: [id])
+}
+
+model SubscriptionPlan {
+  id            Int      @id @default(autoincrement())
+  name          String
+  price         Float
+  duration      Int      // Duration in months
+  description   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
