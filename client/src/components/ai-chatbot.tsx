@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bot, X, Send, Loader2, ChevronDown, ChevronUp } from "lucide-react";
@@ -7,6 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
+
 
 interface Message {
   id: string;
@@ -24,12 +26,28 @@ export function AIChatbot() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
 
+  // Scroll to the bottom when messages update
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
+    // Retrieve chat history from localStorage on load
+    const storedMessages = localStorage.getItem("chatMessages");
+    if (storedMessages) {
+      setMessages(JSON.parse(storedMessages));
+    }
+  }, []);
+
+  useEffect(() => {
     scrollToBottom();
+  }, [messages]);
+
+  // Store chat messages in localStorage
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem("chatMessages", JSON.stringify(messages));
+    }
   }, [messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,6 +84,7 @@ export function AIChatbot() {
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error("Error sending message:", error);
+      toast.error("Something went wrong while sending the message. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -193,8 +212,9 @@ export function AIChatbot() {
                       placeholder="Type your message..."
                       className="flex-1"
                       disabled={isLoading}
+                      aria-label="Message input"
                     />
-                    <Button type="submit" size="icon" disabled={isLoading}>
+                    <Button type="submit" size="icon" disabled={isLoading} aria-label="Send message">
                       <Send className="h-4 w-4" />
                     </Button>
                   </div>

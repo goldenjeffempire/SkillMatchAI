@@ -1,144 +1,15 @@
-// Use PostgreSQL as the database provider
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 generator client {
   provider = "prisma-client-js"
-  output   = "./node_modules/@prisma/client"
+  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
-
-model User {
-  id                   Int                  @id @default(autoincrement())
-  username             String               @unique
-  email                String               @unique
-  password             String
-  emailVerified        Boolean              @default(false)
-  verificationToken    String?              @unique
-  fullName             String?
-  firstName            String?
-  lastName             String?
-  avatar               String?
-  role                 String               @default("user")
-  bio                  String?
-  onboardingCompleted  Boolean              @default(false)
-  onboardingStep       Int                  @default(1)
-  preferences          Json                 @default("{}")
-  stripeCustomerId     String?
-  stripeSubscriptionId String?
-  subscriptionTier     String               @default("free")
-  resetPasswordToken   String?
-  resetPasswordExpires DateTime?
-  lastLoginAt          DateTime?
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @default(now()) @updatedAt
-
-  posts                Post[]
-  comments             Comment[]
-  likes                Like[]
-  follows              Follow[]             @relation("UserFollows")
-  followers            Follow[]             @relation("UserFollowers")
-  aiContents           AiContent[]
-  projects             Project[]
-}
-
-model Post {
-  id          Int        @id @default(autoincrement())
-  userId      Int
-  content     String
-  mediaUrl    String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-
-  user        User       @relation(fields: [userId], references: [id])
-  comments    Comment[]
-  likes       Like[]
-}
-
-model Comment {
-  id        Int      @id @default(autoincrement())
-  postId    Int
-  userId    Int
-  content   String
-  createdAt DateTime @default(now())
-
-  post      Post     @relation(fields: [postId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
-}
-
-model Like {
-  id        Int      @id @default(autoincrement())
-  postId    Int
-  userId    Int
-  createdAt DateTime @default(now())
-
-  post      Post     @relation(fields: [postId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
-}
-
-model Book {
-  id        Int      @id @default(autoincrement())
-  title     String
-  author    String
-  category  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Follow {
-  id           Int      @id @default(autoincrement())
-  followerId   Int
-  followingId  Int
-  createdAt    DateTime @default(now())
-
-  follower     User     @relation("UserFollows", fields: [followerId], references: [id])
-  following    User     @relation("UserFollowers", fields: [followingId], references: [id])
-}
-
-model AiContent {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  content   String
-  type      String?
-  createdAt DateTime @default(now())
-
-  user      User     @relation(fields: [userId], references: [id])
-}
-
-model Project {
-  id          Int        @id @default(autoincrement())
-  userId      Int
-  title       String
-  description String?
-  status      String     @default("draft")
-  settings    Json       @default("{}")
-  published   Boolean    @default(false)
-  publishedUrl String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-
-  user        User       @relation(fields: [userId], references: [id])
-  components  ProjectComponent[]
-}
-
-model ProjectComponent {
-  id          Int        @id @default(autoincrement())
-  projectId   Int
-  type        String
-  content     String
-  order       Int
-  createdAt   DateTime   @default(now())
-
-  project     Project    @relation(fields: [projectId], references: [id])
-}
-
-model SubscriptionPlan {
-  id            Int      @id @default(autoincrement())
-  name          String
-  price         Float
-  duration      Int      // Duration in months
-  description   String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
 }

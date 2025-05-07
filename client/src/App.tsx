@@ -1,8 +1,6 @@
-import { StrictMode } from "react";
+import { StrictMode, useEffect } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Router, Switch, Route } from "wouter";
-import { useLocation } from "wouter";
-import { useEffect } from "react";
+import { Router, Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { ThemeProvider } from "./components/ui/theme-provider";
 import { Toaster } from "./components/ui/toaster";
@@ -74,7 +72,7 @@ function GlobalErrorHandler() {
 // AI Chatbot wrapper that conditionally shows the chatbot based on the current route
 function AIChatbotWrapper() {
   const [location] = useLocation();
-  const hideChatbotOnRoutes = ["/auth"];
+  const hideChatbotOnRoutes = ["/auth", "/checkout", "/success"];
 
   if (hideChatbotOnRoutes.includes(location)) {
     return null;
@@ -91,113 +89,113 @@ export default function App() {
         <ThemeProvider>
           <ErrorBoundary>
             <AuthProvider>
-            <TooltipProvider>
-              <Router>
-                <Switch>
-                  <Route path="/" component={HomePage} />
-                  <Route path="/auth" component={AuthPage} />
-                  <Route path="/branding" component={BrandingPage} />
-                  <Route path="/subscription" component={SubscriptionPage} />
-                  <Route path="/dashboard">
-                    <ProtectedRoute>
-                      <DashboardPage />
-                    </ProtectedRoute>
-                  </Route>
-                  <Route path="/social">
-                    <ProtectedRoute>
-                      <SocialPage />
-                    </ProtectedRoute>
-                  </Route>
-                  <Route path="/library">
-                    <ProtectedRoute>
-                      <LibraryPage />
-                    </ProtectedRoute>
-                  </Route>
-                  <Route path="/checkout">
-                    <ProtectedRoute>
-                      <CheckoutPage />
-                    </ProtectedRoute>
-                  </Route>
-                  <Route path="/echo-builder">
-                    <ProtectedRoute>
-                      <EchoBuilderPage />
-                    </ProtectedRoute>
-                  </Route>
-                  <Route path="/echo-writer">
-                    <ProtectedRoute>
-                      <EchoWriterPage />
-                    </ProtectedRoute>
-                  </Route>
-                  <Route path="/echo-marketer">
-                    <ProtectedRoute>
-                      <EchoMarketerPage />
-                    </ProtectedRoute>
-                  </Route>
-                  <Route path="/echo-teacher">
-                    <ProtectedRoute>
-                      <EchoTeacherPage />
-                    </ProtectedRoute>
-                  </Route>
-                  <Route path="/books">
-                    <ProtectedRoute>
-                      <BooksPage />
-                    </ProtectedRoute>
-                  </Route>
-                  <Route path="/success">
-                    <ProtectedRoute>
-                      <SuccessPage />
-                    </ProtectedRoute>
-                  </Route>
-                  <Route path="/projects">
-                    <ProtectedRoute>
-                      <ProjectsPage />
-                    </ProtectedRoute>
-                  </Route>
-                  <Route path="/projects/:id">
-                    <ProtectedRoute>
-                      <ProjectDetailPage />
-                    </ProtectedRoute>
-                  </Route>
-                  <Route path="/ai-studio">
-                    <ProtectedRoute>
-                      <AiStudioPage />
-                    </ProtectedRoute>
-                  </Route>
-                  <Route path="/users">
-                    <ProtectedRoute>
-                      <UsersPage />
-                    </ProtectedRoute>
-                  </Route>
-                  <Route path="/settings">
-                    <ProtectedRoute>
-                      <SettingsPage />
-                    </ProtectedRoute>
-                  </Route>
-                  <Route path="/products">
-                    <ProtectedRoute>
-                      <ProductsPage />
-                    </ProtectedRoute>
-                  </Route>
-                  <Route path="/customers">
-                    <ProtectedRoute>
-                      <CustomersPage />
-                    </ProtectedRoute>
-                  </Route>
-                  <Route path="/profile">
-                    <ProtectedRoute>
-                      <ProfilePage />
-                    </ProtectedRoute>
-                  </Route>
-                  <Route path="/echo-dev" component={EchoDevPage} />
-                  <Route path="/guardian-ai" component={GuardianAIPage} />
-                  <Route component={NotFound} />
-                </Switch>
-              </Router>
-              <Toaster />
-              <GlobalErrorHandler />
-              <AIChatbotWrapper />
-            </TooltipProvider>
-          </AuthProvider>
+              <TooltipProvider>
+                <Router>
+                  <Switch>
+                    <Route path="/" component={HomePage} />
+                    <Route path="/auth" component={AuthPage} />
+                    <Route path="/branding" component={BrandingPage} />
+                    <Route path="/subscription" component={SubscriptionPage} />
+                    <Route path="/dashboard">
+                      <ProtectedRoute>
+                        <DashboardPage />
+                      </ProtectedRoute>
+                    </Route>
+                    <Route path="/social">
+                      <ProtectedRoute>
+                        <SocialPage />
+                      </ProtectedRoute>
+                    </Route>
+                    <Route path="/library">
+                      <ProtectedRoute>
+                        <LibraryPage />
+                      </ProtectedRoute>
+                    </Route>
+                    <Route path="/checkout">
+                      <ProtectedRoute>
+                        <CheckoutPage />
+                      </ProtectedRoute>
+                    </Route>
+                    <Route path="/echo-builder">
+                      <ProtectedRoute>
+                        <EchoBuilderPage />
+                      </ProtectedRoute>
+                    </Route>
+                    <Route path="/echo-writer">
+                      <ProtectedRoute>
+                        <EchoWriterPage />
+                      </ProtectedRoute>
+                    </Route>
+                    <Route path="/echo-marketer">
+                      <ProtectedRoute>
+                        <EchoMarketerPage />
+                      </ProtectedRoute>
+                    </Route>
+                    <Route path="/echo-teacher">
+                      <ProtectedRoute>
+                        <EchoTeacherPage />
+                      </ProtectedRoute>
+                    </Route>
+                    <Route path="/books">
+                      <ProtectedRoute>
+                        <BooksPage />
+                      </ProtectedRoute>
+                    </Route>
+                    <Route path="/success">
+                      <ProtectedRoute>
+                        <SuccessPage />
+                      </ProtectedRoute>
+                    </Route>
+                    <Route path="/projects">
+                      <ProtectedRoute>
+                        <ProjectsPage />
+                      </ProtectedRoute>
+                    </Route>
+                    <Route path="/projects/:id">
+                      <ProtectedRoute>
+                        <ProjectDetailPage />
+                      </ProtectedRoute>
+                    </Route>
+                    <Route path="/ai-studio">
+                      <ProtectedRoute>
+                        <AiStudioPage />
+                      </ProtectedRoute>
+                    </Route>
+                    <Route path="/users">
+                      <ProtectedRoute>
+                        <UsersPage />
+                      </ProtectedRoute>
+                    </Route>
+                    <Route path="/settings">
+                      <ProtectedRoute>
+                        <SettingsPage />
+                      </ProtectedRoute>
+                    </Route>
+                    <Route path="/products">
+                      <ProtectedRoute>
+                        <ProductsPage />
+                      </ProtectedRoute>
+                    </Route>
+                    <Route path="/customers">
+                      <ProtectedRoute>
+                        <CustomersPage />
+                      </ProtectedRoute>
+                    </Route>
+                    <Route path="/profile">
+                      <ProtectedRoute>
+                        <ProfilePage />
+                      </ProtectedRoute>
+                    </Route>
+                    <Route path="/echo-dev" component={EchoDevPage} />
+                    <Route path="/guardian-ai" component={GuardianAIPage} />
+                    <Route component={NotFound} />
+                  </Switch>
+                </Router>
+                <Toaster />
+                <GlobalErrorHandler />
+                <AIChatbotWrapper />
+              </TooltipProvider>
+            </AuthProvider>
           </ErrorBoundary>
         </ThemeProvider>
       </QueryClientProvider>

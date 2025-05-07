@@ -13,7 +13,11 @@ export default defineConfig({
   },
   root: path.resolve(__dirname, "client"),
   build: {
+    chunkSizeWarningLimit: 1000,
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      external: ["react-toastify"],
+    },
   },
 });
